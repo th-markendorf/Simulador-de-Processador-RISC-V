@@ -7,8 +7,10 @@ int main() {
     Core core = Core(1024);
 
     std::vector<uint32_t> programa = {
-        0x00500513,
-        0xFFF50593
+        0x01400293, 
+        0x00F00313,
+        0x006283B3,
+        0x40638433
     };
 
     core.load_program(programa);

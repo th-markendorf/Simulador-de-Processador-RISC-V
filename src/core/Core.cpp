@@ -70,6 +70,32 @@ void Core::execute(uint32_t instrucao) {
             contador_programa += 4;
             break;
         }
+        case 0x33: {
+            uint32_t rd     = (instrucao >> 7)  & 0x1F;
+            uint32_t funct3 = (instrucao >> 12) & 0x7;
+            uint32_t rs1    = (instrucao >> 15) & 0x1F;
+            uint32_t rs2    = (instrucao >> 20) & 0x1F;
+            uint32_t funct7 = (instrucao >> 25) & 0x7F;
+
+            if (funct3 == 0x0 && funct7 == 0x00) {
+                std::cout << "Executando ADD x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] + registradores[rs2];
+                }
+            }
+            else if (funct3 == 0x0 && funct7 == 0x20) {
+                std::cout << "Executando SUB x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] - registradores[rs2];
+                }
+            }
+            else {
+                std::cerr << "Tipo-R com funct3/funct7 desconhecido!" << std::endl;
+            }
+
+            contador_programa += 4;
+            break;
+        }
 
         default:
             std::cerr << "Opcode desconhecido: 0x" << std::hex << opcode << std::endl;
