@@ -146,6 +146,59 @@ void Core::execute(uint32_t instrucao) {
             break;
         }
 
+         case 0x63: {
+            uint32_t funct3 = (instrucao >> 12) & 0x7;
+            uint32_t rs1 = (instrucao >> 15) & 0x1F;
+            uint32_t rs2 = (instrucao >> 20) & 0x1F;
+
+            uint32_t imm_12 = (instrucao >> 31) & 0x1;
+            uint32_t imm_11 = (instrucao >> 7) & 0x1;
+            uint32_t imm_10_5 = (instrucao >> 25) & 0x3F;
+            uint32_t imm_4_1 = (instrucao >> 8) & 0xF;
+            int32_t offset = (imm_12 << 12) | (imm_11 << 11) | (imm_10_5 << 5) | (imm_4_1 << 1);
+            if (offset & 0x1000) {
+                offset |= 0xFFFFE000;
+            }
+
+            bool deve_desviar = false;
+            if (funct3 == 0x0) {
+                std::cout << "Executando BEQ x" << std::dec << rs1 << ", x" << rs2 << ", " << offset << std::endl;
+                if (registradores[rs1] == registradores[rs2]) {
+                    deve_desviar = true;
+                }
+            } else {
+                std::cerr << "Branch com funct3 desconhecido!" << std::endl;
+            }
+
+            if (deve_desviar) {
+                contador_programa += offset;
+            } else {
+                contador_programa += 4;
+            }
+            break;
+        }
+
+        case 0x6F: {
+            uint32_t rd = (instrucao >> 7) & 0x1F;
+
+            uint32_t imm_20 = (instrucao >> 31) & 0x1;
+            uint32_t imm_19_12 = (instrucao >> 12) & 0xFF;
+            uint32_t imm_11 = (instrucao >> 20) & 0x1;
+            uint32_t imm_10_1 = (instrucao >> 21) & 0x3FF;
+            int32_t offset = (imm_20 << 20) | (imm_19_12 << 12) | (imm_11 << 11) | (imm_10_1 << 1);
+            if (offset & 0x100000) {
+                offset |= 0xFFF00000;
+            }
+
+            std::cout << "Executando JAL x" << std::dec << rd << ", " << offset << std::endl;
+
+            if (rd != 0) {
+                registradores[rd] = contador_programa + 4;
+            }
+            contador_programa += offset;
+            break;
+        }
+
         default:
             std::cerr << "Opcode desconhecido: 0x" << std::hex << opcode << std::endl;
             contador_programa += 4;
