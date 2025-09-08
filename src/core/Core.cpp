@@ -97,6 +97,55 @@ void Core::execute(uint32_t instrucao) {
             break;
         }
 
+        case 0x03: {
+            uint32_t rd = (instrucao >> 7) & 0x1F;
+            uint32_t funct3 = (instrucao >> 12) & 0x7;
+            uint32_t rs1 = (instrucao >> 15) & 0x1F;
+            int32_t imm = static_cast<int32_t>(instrucao) >> 20;
+
+            if (funct3 == 0x2) {
+                uint32_t endereco = registradores[rs1] + imm;
+                std::cout << "Executando LW x" << std::dec << rd << ", " << imm << "(x" << rs1 << ")" << " -> Endereco: 0x" << std::hex << endereco << std::endl;
+
+                if (rd != 0) {
+                    uint32_t valor = 0;
+                    valor |= static_cast<uint32_t>(memoria[endereco + 0]) << 0;
+                    valor |= static_cast<uint32_t>(memoria[endereco + 1]) << 8;
+                    valor |= static_cast<uint32_t>(memoria[endereco + 2]) << 16;
+                    valor |= static_cast<uint32_t>(memoria[endereco + 3]) << 24;
+                    registradores[rd] = valor;
+                }
+            }
+            contador_programa += 4;
+            break;
+        }
+
+        case 0x23: {
+            uint32_t funct3 = (instrucao >> 12) & 0x7;
+            uint32_t rs1 = (instrucao >> 15) & 0x1F;
+            uint32_t rs2 = (instrucao >> 20) & 0x1F;
+
+            uint32_t imm_4_0 = (instrucao >> 7) & 0x1F;
+            uint32_t imm_11_5 = (instrucao >> 25) & 0x7F;
+            int32_t imm = static_cast<int32_t>((imm_11_5 << 5) | imm_4_0);
+            if (imm & 0x800) {
+                imm |= 0xFFFFF000;
+            }
+
+            if (funct3 == 0x2) {
+                uint32_t endereco = registradores[rs1] + imm;
+                std::cout << "Executando SW x" << std::dec << rs2 << ", " << imm << "(x" << rs1 << ")" << " -> Endereco: 0x" << std::hex << endereco << std::endl;
+
+                uint32_t valor = registradores[rs2];
+                memoria[endereco + 0] = (valor >> 0) & 0xFF;
+                memoria[endereco + 1] = (valor >> 8) & 0xFF;
+                memoria[endereco + 2] = (valor >> 16) & 0xFF;
+                memoria[endereco + 3] = (valor >> 24) & 0xFF;
+            }
+            contador_programa += 4;
+            break;
+        }
+
         default:
             std::cerr << "Opcode desconhecido: 0x" << std::hex << opcode << std::endl;
             contador_programa += 4;
