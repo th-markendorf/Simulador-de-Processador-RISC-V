@@ -30,7 +30,7 @@ void Core::imprimir_register() {
     std::cout << "--------------------------------" << std::endl;
 }
 
-void Core::load_program(const std::vector<uint32_t>& programa) {
+void Core::load_program(const std::vector<uint32_t> &programa) {
     for (size_t i = 0; i < programa.size(); ++i) {
         memoria[i * 4 + 0] = (programa[i] >> 0) & 0xFF;
         memoria[i * 4 + 1] = (programa[i] >> 8) & 0xFF;
@@ -60,21 +60,32 @@ void Core::execute(uint32_t instrucao) {
     switch (opcode) {
         case 0x13: {
             uint32_t rd = (instrucao >> 7) & 0x1F;
+            uint32_t funct3 = (instrucao >> 12) & 0x7;
             uint32_t rs1 = (instrucao >> 15) & 0x1F;
             int32_t imm = static_cast<int32_t>(instrucao) >> 20;
 
-            std::cout << "Executando ADDI x" << rd << ", x" << rs1 << ", " << imm << std::endl;
-            if (rd != 0) {
-                registradores[rd] = registradores[rs1] + imm;
+            if (funct3 == 0x0) {
+                std::cout << "Executando ADDI x" << std::dec << rd << ", x" << rs1 << ", " << imm << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] + imm;
+                }
+            } else if (funct3 == 0x2) {
+                std::cout << "Executando SLTI x" << std::dec << rd << ", x" << rs1 << ", " << imm << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < imm) ? 1 : 0;
+                }
+            } else {
+                std::cerr << "Tipo-I com funct3 desconhecido: 0x" << std::hex << funct3 << std::endl;
             }
+
             contador_programa += 4;
             break;
         }
         case 0x33: {
-            uint32_t rd     = (instrucao >> 7)  & 0x1F;
+            uint32_t rd = (instrucao >> 7) & 0x1F;
             uint32_t funct3 = (instrucao >> 12) & 0x7;
-            uint32_t rs1    = (instrucao >> 15) & 0x1F;
-            uint32_t rs2    = (instrucao >> 20) & 0x1F;
+            uint32_t rs1 = (instrucao >> 15) & 0x1F;
+            uint32_t rs2 = (instrucao >> 20) & 0x1F;
             uint32_t funct7 = (instrucao >> 25) & 0x7F;
 
             if (funct3 == 0x0 && funct7 == 0x00) {
@@ -82,14 +93,20 @@ void Core::execute(uint32_t instrucao) {
                 if (rd != 0) {
                     registradores[rd] = registradores[rs1] + registradores[rs2];
                 }
-            }
-            else if (funct3 == 0x0 && funct7 == 0x20) {
+            } else if (funct3 == 0x0 && funct7 == 0x20) {
                 std::cout << "Executando SUB x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
                 if (rd != 0) {
                     registradores[rd] = registradores[rs1] - registradores[rs2];
                 }
-            }
-            else {
+            } else if (funct3 == 0x2 && funct7 == 0x00) {
+                std::cout << "Executando SLT x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < static_cast<int32_t>(registradores[
+                                             rs2]))
+                                            ? 1
+                                            : 0;
+                }
+            } else {
                 std::cerr << "Tipo-R com funct3/funct7 desconhecido!" << std::endl;
             }
 
@@ -105,7 +122,8 @@ void Core::execute(uint32_t instrucao) {
 
             if (funct3 == 0x2) {
                 uint32_t endereco = registradores[rs1] + imm;
-                std::cout << "Executando LW x" << std::dec << rd << ", " << imm << "(x" << rs1 << ")" << " -> Endereco: 0x" << std::hex << endereco << std::endl;
+                std::cout << "Executando LW x" << std::dec << rd << ", " << imm << "(x" << rs1 << ")" <<
+                        " -> Endereco: 0x" << std::hex << endereco << std::endl;
 
                 if (rd != 0) {
                     uint32_t valor = 0;
@@ -134,7 +152,8 @@ void Core::execute(uint32_t instrucao) {
 
             if (funct3 == 0x2) {
                 uint32_t endereco = registradores[rs1] + imm;
-                std::cout << "Executando SW x" << std::dec << rs2 << ", " << imm << "(x" << rs1 << ")" << " -> Endereco: 0x" << std::hex << endereco << std::endl;
+                std::cout << "Executando SW x" << std::dec << rs2 << ", " << imm << "(x" << rs1 << ")" <<
+                        " -> Endereco: 0x" << std::hex << endereco << std::endl;
 
                 uint32_t valor = registradores[rs2];
                 memoria[endereco + 0] = (valor >> 0) & 0xFF;
@@ -146,7 +165,7 @@ void Core::execute(uint32_t instrucao) {
             break;
         }
 
-         case 0x63: {
+        case 0x63: {
             uint32_t funct3 = (instrucao >> 12) & 0x7;
             uint32_t rs1 = (instrucao >> 15) & 0x1F;
             uint32_t rs2 = (instrucao >> 20) & 0x1F;
@@ -164,6 +183,11 @@ void Core::execute(uint32_t instrucao) {
             if (funct3 == 0x0) {
                 std::cout << "Executando BEQ x" << std::dec << rs1 << ", x" << rs2 << ", " << offset << std::endl;
                 if (registradores[rs1] == registradores[rs2]) {
+                    deve_desviar = true;
+                }
+            } else if (funct3 == 0x1) {
+                std::cout << "Executando BNE x" << std::dec << rs1 << ", x" << rs2 << ", " << offset << std::endl;
+                if (registradores[rs1] != registradores[rs2]) {
                     deve_desviar = true;
                 }
             } else {
@@ -196,6 +220,19 @@ void Core::execute(uint32_t instrucao) {
                 registradores[rd] = contador_programa + 4;
             }
             contador_programa += offset;
+            break;
+        }
+        case 0x37: {
+            uint32_t rd = (instrucao >> 7) & 0x1F;
+            uint32_t imm = instrucao & 0xFFFFF000;
+
+            std::cout << "Executando LUI x" << std::dec << rd << ", 0x" << std::hex << (imm >> 12) << std::endl;
+
+            if (rd != 0) {
+                registradores[rd] = imm;
+            }
+
+            contador_programa += 4;
             break;
         }
 
