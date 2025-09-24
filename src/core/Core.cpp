@@ -74,6 +74,21 @@ void Core::execute(uint32_t instrucao) {
                 if (rd != 0) {
                     registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < imm) ? 1 : 0;
                 }
+            } else if (funct3 == 0x4) {
+                std::cout << "Executando XORI x" << std::dec << rd << ", x" << rs1 << ", " << imm << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] ^ imm;
+                }
+            } else if (funct3 == 0x6) {
+                std::cout << "Executando ORI x" << std::dec << rd << ", x" << rs1 << ", " << imm << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] | imm;
+                }
+            } else if (funct3 == 0x7) {
+                std::cout << "Executando ANDI x" << std::dec << rd << ", x" << rs1 << ", " << imm << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] & imm;
+                }
             } else {
                 std::cerr << "Tipo-I com funct3 desconhecido: 0x" << std::hex << funct3 << std::endl;
             }
@@ -101,10 +116,22 @@ void Core::execute(uint32_t instrucao) {
             } else if (funct3 == 0x2 && funct7 == 0x00) {
                 std::cout << "Executando SLT x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
                 if (rd != 0) {
-                    registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < static_cast<int32_t>(registradores[
-                                             rs2]))
-                                            ? 1
-                                            : 0;
+                    registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < static_cast<int32_t>(registradores[rs2]))? 1 : 0;
+                }
+            } else if (funct3 == 0x4 && funct7 == 0x00) {
+                std::cout << "Executando XOR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] ^ registradores[rs2];
+                }
+            } else if (funct3 == 0x6 && funct7 == 0x00) {
+                std::cout << "Executando OR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] | registradores[rs2];
+                }
+            } else if (funct3 == 0x7 && funct7 == 0x00) {
+                std::cout << "Executando AND x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] & registradores[rs2];
                 }
             } else {
                 std::cerr << "Tipo-R com funct3/funct7 desconhecido!" << std::endl;
