@@ -89,6 +89,27 @@ void Core::execute(uint32_t instrucao) {
                 if (rd != 0) {
                     registradores[rd] = registradores[rs1] & imm;
                 }
+            } else if (funct3 == 0x1) {
+                uint32_t shamt = imm & 0x1F;
+                std::cout << "Executando SLLI x" << std::dec << rd << ", x" << rs1 << ", " << shamt << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] << shamt;
+                }
+            } else if (funct3 == 0x5) {
+                uint32_t shamt = imm & 0x1F;
+                uint32_t funct7_special = imm >> 5;
+
+                if (funct7_special == 0x00) {
+                    std::cout << "Executando SRLI x" << std::dec << rd << ", x" << rs1 << ", " << shamt << std::endl;
+                    if (rd != 0) {
+                        registradores[rd] = registradores[rs1] >> shamt;
+                    }
+                } else if (funct7_special == 0x20) {
+                    std::cout << "Executando SRAI x" << std::dec << rd << ", x" << rs1 << ", " << shamt << std::endl;
+                    if (rd != 0) {
+                        registradores[rd] = static_cast<int32_t>(registradores[rs1]) >> shamt;
+                    }
+                }
             } else {
                 std::cerr << "Tipo-I com funct3 desconhecido: 0x" << std::hex << funct3 << std::endl;
             }
@@ -132,6 +153,24 @@ void Core::execute(uint32_t instrucao) {
                 std::cout << "Executando AND x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
                 if (rd != 0) {
                     registradores[rd] = registradores[rs1] & registradores[rs2];
+                }
+            } else if (funct3 == 0x1 && funct7 == 0x00) {
+                uint32_t shamt = registradores[rs2] & 0x1F; // Usa os 5 bits de baixo de rs2
+                std::cout << "Executando SLL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] << shamt;
+                }
+            } else if (funct3 == 0x5 && funct7 == 0x00) {
+                uint32_t shamt = registradores[rs2] & 0x1F;
+                std::cout << "Executando SRL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = registradores[rs1] >> shamt;
+                }
+            } else if (funct3 == 0x5 && funct7 == 0x20) {
+                uint32_t shamt = registradores[rs2] & 0x1F;
+                std::cout << "Executando SRA x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
+                if (rd != 0) {
+                    registradores[rd] = static_cast<int32_t>(registradores[rs1]) >> shamt;
                 }
             } else {
                 std::cerr << "Tipo-R com funct3/funct7 desconhecido!" << std::endl;
