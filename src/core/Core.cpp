@@ -1,7 +1,3 @@
-//
-// Created by rafael on 8/18/25.
-//
-
 #include "Core.h"
 
 #include <iomanip>
@@ -9,6 +5,7 @@
 #include <ostream>
 
 Core::Core(size_t tamanho_memoria) : memoria(tamanho_memoria, 0) {
+    cache = std::make_unique<Cache>(4096, 16, memoria);
     reset();
 }
 
@@ -40,12 +37,7 @@ void Core::load_program(const std::vector<uint32_t> &programa) {
 }
 
 uint32_t Core::fetch() {
-    uint32_t instrucao = 0;
-    instrucao |= static_cast<uint32_t>(memoria[contador_programa + 0]) << 0;
-    instrucao |= static_cast<uint32_t>(memoria[contador_programa + 1]) << 8;
-    instrucao |= static_cast<uint32_t>(memoria[contador_programa + 2]) << 16;
-    instrucao |= static_cast<uint32_t>(memoria[contador_programa + 3]) << 24;
-    return instrucao;
+    return cache->lerDados(contador_programa);
 }
 
 void Core::execute(uint32_t instrucao) {
@@ -192,12 +184,7 @@ void Core::execute(uint32_t instrucao) {
                         " -> Endereco: 0x" << std::hex << endereco << std::endl;
 
                 if (rd != 0) {
-                    uint32_t valor = 0;
-                    valor |= static_cast<uint32_t>(memoria[endereco + 0]) << 0;
-                    valor |= static_cast<uint32_t>(memoria[endereco + 1]) << 8;
-                    valor |= static_cast<uint32_t>(memoria[endereco + 2]) << 16;
-                    valor |= static_cast<uint32_t>(memoria[endereco + 3]) << 24;
-                    registradores[rd] = valor;
+                    registradores[rd] = cache->lerDados(endereco);
                 }
             }
             contador_programa += 4;
@@ -222,10 +209,7 @@ void Core::execute(uint32_t instrucao) {
                         " -> Endereco: 0x" << std::hex << endereco << std::endl;
 
                 uint32_t valor = registradores[rs2];
-                memoria[endereco + 0] = (valor >> 0) & 0xFF;
-                memoria[endereco + 1] = (valor >> 8) & 0xFF;
-                memoria[endereco + 2] = (valor >> 16) & 0xFF;
-                memoria[endereco + 3] = (valor >> 24) & 0xFF;
+                cache->escreverDados(endereco, valor);
             }
             contador_programa += 4;
             break;

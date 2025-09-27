@@ -7,4 +7,6 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(Simulador-de-Processador-RISC-V ${SOURCES}
         src/core/Core.cpp
-        src/core/Core.h)
+        src/core/Core.h
+        src/cache/Cache.cpp
+        src/cache/Cache.h)
