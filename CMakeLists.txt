@@ -9,4 +9,6 @@ add_executable(Simulador-de-Processador-RISC-V ${SOURCES}
         src/core/Core.cpp
         src/core/Core.h
         src/cache/Cache.cpp
-        src/cache/Cache.h)
+        src/cache/Cache.h
+        src/main.cpp
+        src/main.cpp)

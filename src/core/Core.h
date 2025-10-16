@@ -14,6 +14,9 @@ public:
     void imprimir_register();
     void load_program(const std::vector<uint32_t>& programa);
     void run();
+    void step();
+    bool is_finished();
+    void set_register(int reg_index, uint32_t valor);
 
 private:
     uint32_t fetch();

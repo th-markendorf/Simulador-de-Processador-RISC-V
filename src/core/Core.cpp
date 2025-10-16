@@ -16,6 +16,21 @@ void Core::reset() {
     }
 }
 
+bool Core::is_finished() {
+    return contador_programa >= memoria.size();
+}
+
+void Core::step() {
+    if (is_finished()) {
+        std::cout << "Simulacao ja finalizada. PC em 0x" << std::hex << contador_programa << std::endl;
+        return;
+    }
+
+    uint32_t instrucao = fetch();
+
+    execute(instrucao);
+}
+
 void Core::imprimir_register() {
     std::cout << "Registers:" << std::endl;
     for (int i = 0; i < 32; i += 1) {
@@ -129,7 +144,10 @@ void Core::execute(uint32_t instrucao) {
             } else if (funct3 == 0x2 && funct7 == 0x00) {
                 std::cout << "Executando SLT x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
                 if (rd != 0) {
-                    registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < static_cast<int32_t>(registradores[rs2]))? 1 : 0;
+                    registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < static_cast<int32_t>(registradores[
+                                             rs2]))
+                                            ? 1
+                                            : 0;
                 }
             } else if (funct3 == 0x4 && funct7 == 0x00) {
                 std::cout << "Executando XOR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2 << std::endl;
@@ -294,12 +312,28 @@ void Core::execute(uint32_t instrucao) {
     registradores[0] = 0;
 }
 
-void Core::run() {
-    std::cout << "Iniciando a simulacao..." << std::endl;
-    while (contador_programa < memoria.size()) {
-        uint32_t instrucao = fetch();
-        execute(instrucao);
-        imprimir_register();
+void Core::set_register(int reg_index, uint32_t valor) {
+    if (reg_index > 0 && reg_index < 32) {
+        registradores[reg_index] = valor;
+    } else if (reg_index == 0) {
+        std::cout << "[AVISO] Nao e permitido alterar o registrador x0 (zero)." << std::endl;
+    } else {
+        std::cerr << "[ERRO] Tentativa de acessar registrador invalido: " << reg_index << std::endl;
     }
+}
+
+void Core::run() {
+    std::cout << "Iniciando a simulacao (modo run)..." << std::endl;
+
+    while (!is_finished()) {
+        uint32_t instrucao_atual = fetch();
+        execute(instrucao_atual);
+
+        if (instrucao_atual == 0) {
+            break;
+        }
+    }
+
     std::cout << "Simulacao finalizada." << std::endl;
+    imprimir_register();
 }
