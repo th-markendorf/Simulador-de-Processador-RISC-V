@@ -9,6 +9,7 @@ class Cache
 public:
     Cache(uint32_t tamanho_cache, uint32_t tamanho_bloco, std::vector<uint8_t>& memoria_principal);
 
+    void reset();
     uint32_t lerDados(uint32_t endereco);
     void escreverDados(uint32_t endereco, uint32_t valor);
 

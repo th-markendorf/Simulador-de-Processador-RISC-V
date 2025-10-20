@@ -15,6 +15,15 @@ Cache::Cache(uint32_t tamanho_cache, uint32_t tamanho_bloco, std::vector<uint8_t
     }
 }
 
+void Cache::reset()
+{
+    for (LinhaCache& linha : linhas)
+    {
+        linha.valida = false;
+        linha.tag = 0;
+    }
+}
+
 uint32_t Cache::lerDados(uint32_t endereco)
 {
     // Calcula o número de bits para o offset e para o índice

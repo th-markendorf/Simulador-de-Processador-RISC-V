@@ -14,6 +14,7 @@ void Core::reset() {
     for (int i = 0; i < 32; ++i) {
         registradores[i] = 0;
     }
+    cache->reset();
 }
 
 bool Core::is_finished() {
