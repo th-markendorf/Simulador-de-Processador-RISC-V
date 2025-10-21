@@ -143,8 +143,8 @@ void executarInstrucaoDemo(Core& core) {
 
     std::cout << std::dec;
 
-    std::cout << "Pressione Enter para continuar...";
-    std::cin.get();
+    std::cout << "Pressione Enter para continuar... \n";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 
@@ -263,9 +263,8 @@ void mostrarAjuda() {
         }
 
         if (escolha != 0) {
-            std::cout << "\nPressione Enter para continuar...";
-            if(std::cin.peek() == '\n') std::cin.ignore();
-            std::cin.get();
+            std::cout << "\nPressione Enter para continuar... \n";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
     }
 }
