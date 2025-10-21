@@ -3,15 +3,37 @@ project(Simulador-de-Processador-RISC-V CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-add_executable(Simulador-de-Processador-RISC-V ${SOURCES}
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+# -------------------------
+
+set(PROJECT_SOURCES
+        src/main.cpp
         src/core/Core.cpp
-        src/core/Core.h
         src/cache/Cache.cpp
-        src/cache/Cache.h
-        src/main.cpp
-        src/main.cpp
         src/gui/mainwindow.cpp
+)
+
+set(PROJECT_HEADERS
+        src/core/Core.h
+        src/cache/Cache.h
         src/gui/mainwindow.h
-        src/gui/mainwindow.ui)
+)
+
+set(PROJECT_UI_FILES
+        src/gui/mainwindow.ui
+)
+
+add_executable(Simulador-de-Processador-RISC-V
+        ${PROJECT_SOURCES}
+        ${PROJECT_HEADERS}
+        ${PROJECT_UI_FILES}
+)
+
+target_link_libraries(Simulador-de-Processador-RISC-V PRIVATE Qt6::Widgets)
+
+target_include_directories(Simulador-de-Processador-RISC-V PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)

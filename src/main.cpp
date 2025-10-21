@@ -268,7 +268,7 @@ void mostrarAjuda() {
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
     Core core = Core(1024); // 1KB de memória
     int escolha = -1;
 
@@ -305,3 +305,16 @@ int main() {
 
     return 0;
 }
+
+/*
+*int main(int argc, char *argv[])
+*{
+*   QApplication app(argc, argv);
+*
+*   MainWindow w;
+*
+*   w.show();
+*
+*   return app.exec();
+}
+ */
