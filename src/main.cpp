@@ -148,10 +148,8 @@ void executarInstrucaoDemo(Core& core) {
 }
 
 
-// --- LÓGICA DO MENU DO SIMULADOR ---
 
 void modoSimulador(Core& core) {
-    // Este é o menu da minha sugestão anterior
     std::vector<uint32_t> programa_exemplo = {
         0xFB000313, // addi x6, x0, -80
         0x00435393, // slti x7, x6, 4

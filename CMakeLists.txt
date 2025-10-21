@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.16)
 project(Simulador-de-Processador-RISC-V CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -11,4 +11,7 @@ add_executable(Simulador-de-Processador-RISC-V ${SOURCES}
         src/cache/Cache.cpp
         src/cache/Cache.h
         src/main.cpp
-        src/main.cpp)
+        src/main.cpp
+        src/gui/mainwindow.cpp
+        src/gui/mainwindow.h
+        src/gui/mainwindow.ui)
