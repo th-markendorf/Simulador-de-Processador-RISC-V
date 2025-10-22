@@ -302,7 +302,6 @@ std::string Core::handle_load(const Instruction &inst) {
                 registradores[rd] = cache->lerDados(endereco);
             }
             break;
-        // Adicione outros loads (LB, LH, etc.) aqui se necessário
         default:
             log_ss << "ERRO: Load com funct3 desconhecido: 0x" << std::hex << inst.funct3();
             break;
