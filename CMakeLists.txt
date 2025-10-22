@@ -24,6 +24,8 @@ set(PROJECT_HEADERS
 
 set(PROJECT_UI_FILES
         src/gui/mainwindow.ui
+        src/core/Instruction.cpp
+        src/core/Instruction.h
 )
 
 add_executable(Simulador-de-Processador-RISC-V

@@ -4,23 +4,33 @@
 #define SIMULADOR_DE_PROCESSADOR_RISC_V_CORE_H
 
 #include <vector>
-#include <memory> // Adicionado para std::unique_ptr
-#include "../cache/Cache.h" // Adicionado para a classe Cache
+#include <memory>
+
+#include "Instruction.h"
+#include "../cache/Cache.h"
 
 class Core {
 public:
     explicit Core(size_t tamanho_memoria);
     void reset();
-    void imprimir_register();
+    std::array<uint32_t, 32> get_registradores() const;
     void load_program(const std::vector<uint32_t>& programa);
-    void run();
-    void step();
-    bool is_finished();
-    void set_register(int reg_index, uint32_t valor);
+    std::string step();
+    uint32_t get_program_counter() const;
+    bool is_finished() const;
+    std::string set_register(int reg_index, uint32_t valor);
 
 private:
     uint32_t fetch();
-    void execute(uint32_t instrucao);
+    std::string execute(uint32_t instrucao);
+
+    std::string handle_op_imm(const Instruction& inst);  // 0x13
+    std::string handle_op_reg(const Instruction& inst);  // 0x33
+    std::string handle_load(const Instruction& inst);    // 0x03
+    std::string handle_store(const Instruction& inst);   // 0x23
+    std::string handle_branch(const Instruction& inst); // 0x63
+    std::string handle_lui(const Instruction& inst);      // 0x37
+    std::string handle_jal(const Instruction& inst);      // 0x6F
 
     uint32_t registradores[32];
     uint32_t contador_programa;
