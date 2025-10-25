@@ -2,6 +2,10 @@
 #include "ui_mainwindow.h"
 #include <sstream>
 #include <iomanip>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QMessageBox>
 
 // O construtor cria a janela e inicializa seu Core
 MainWindow::MainWindow(Core* core, QWidget *parent)
@@ -18,8 +22,13 @@ MainWindow::MainWindow(Core* core, QWidget *parent)
     ui->logView->setReadOnly(true);
     ui->registersView->setReadOnly(true);
 
-    // Carrega o programa padrão ao iniciar
-    on_loadButton_clicked();
+    m_core->reset(); // Garante que o core esteja zerado
+    ui->logView->append("Simulador iniciado. Use 'Load' para carregar um programa.");
+    updateUI(); // Atualiza a exibição (registradores zerados)
+
+    // Desativa os botões de execução até que um programa seja carregado
+    ui->runButton->setEnabled(false);
+    ui->stepButton->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -28,28 +37,25 @@ MainWindow::~MainWindow()
 }
 
 /**
- * @brief Opção 1 (Executar Programa)
+ * @brief Opção 1 (Carregar Programa)
  */
 void MainWindow::on_loadButton_clicked()
 {
-    m_runTimer->stop(); // Para a simulação se estiver rodando
-    ui->runButton->setText("Run");
-    ui->runButton->setEnabled(true);
-    ui->stepButton->setEnabled(true);
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Abrir Programa Risc-V", // Título da Janela
+        "", // Diretório inicial
+        "Arquivos de Programa Hex (*.hex *.txt);;Todos os Arquivos (*)" // Filtros
+    );
 
-    m_core->reset(); // Reseta o processador
+    // 2. Verifica se o usuário selecionou um arquivo
+    if (filePath.isEmpty()) {
+        ui->logView->append("[AVISO] Carregamento cancelado pelo usuario.");
+        return; // Usuário cancelou
+    }
 
-    std::vector<uint32_t> programa_exemplo = {
-        0xFB000313, // addi x6, x0, -80
-        0x00435393, // slti x7, x6, 4
-        0x40435413, // xori x8, x6, 1028
-        0x00000000  // Instrução Nula (para finalizar)
-    };
-    m_core->load_program(programa_exemplo); // Carrega o programa
-
-    ui->logView->clear(); // Limpa o log
-    ui->logView->append("Programa carregado. Core resetado.");
-    updateUI(); // Atualiza a exibição dos registradores
+    // 3. Chama a nova função helper para fazer o trabalho
+    loadProgramFromFile(filePath);
 }
 
 /**
@@ -137,4 +143,69 @@ void MainWindow::updateUI()
 
     // Envia o texto formatado para a caixa 'registersView'
     ui->registersView->setText(QString::fromStdString(ss_regs.str()));
+}
+
+/**
+ * @brief Função helper que lê um arquivo .hex e o carrega no Core.
+ */
+void MainWindow::loadProgramFromFile(const QString &filePath)
+{
+    std::vector<uint32_t> programa;
+    QFile file(filePath);
+
+    // 1. Tenta abrir o arquivo
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, "Erro", "Nao foi possivel abrir o arquivo: " + file.errorString());
+        return;
+    }
+
+    // 2. Lê o arquivo linha por linha
+    QTextStream in(&file);
+    int lineNumber = 0;
+    while (!in.atEnd()) {
+        lineNumber++;
+        QString line = in.readLine().trimmed();
+
+        // Ignora linhas vazias ou comentários (iniciados com # ou //)
+        if (line.isEmpty() || line.startsWith('#') || line.startsWith("//")) {
+            continue;
+        }
+
+        // 3. Tenta converter a linha de Hex (ex: 0xFB000313) para uint32_t
+        bool ok;
+        // O '0' no final autodetecta a base (ex: "0x" para hex, "10" para dec)
+        uint32_t instrucao = line.toUInt(&ok, 0);
+
+        if (!ok) {
+            // Se falhar, avisa o usuário
+            QMessageBox::critical(this, "Erro de Leitura",
+                                  QString("Erro ao ler o arquivo na linha %1: \"%2\" nao e um numero hexadecimal valido.")
+                                  .arg(lineNumber).arg(line));
+            file.close();
+            return;
+        }
+
+        // 4. Adiciona a instrução ao vetor
+        programa.push_back(instrucao);
+    }
+    file.close();
+
+    // 5. Se chegou aqui, a leitura foi um sucesso. Reseta o Core e carrega.
+
+    // Adiciona uma instrução nula no final para garantir que o simulador pare,
+    // caso o usuário esqueça.
+    programa.push_back(0x00000000);
+
+    m_runTimer->stop(); // Para a simulação se estiver rodando
+    ui->runButton->setText("Run");
+    ui->runButton->setEnabled(true);
+    ui->stepButton->setEnabled(true);
+
+    m_core->reset(); // Reseta o processador
+    m_core->load_program(programa); // Carrega o NOVO programa
+
+    ui->logView->clear(); // Limpa o log
+    ui->logView->append(QString("Programa carregado de %1. Total de %2 instrucoes (+1 nula).")
+                        .arg(filePath).arg(programa.size() - 1));
+    updateUI(); // Atualiza a exibição dos registradores
 }

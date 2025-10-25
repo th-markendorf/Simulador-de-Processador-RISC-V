@@ -5,6 +5,11 @@
 #include <QTimer>
 #include <memory>
 
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QMessageBox>
+
 #include "core/Core.h"
 
 QT_BEGIN_NAMESPACE
@@ -31,6 +36,7 @@ private:
 
     void updateUI(); // Função helper
     void on_run_timer_timeout();
+    void loadProgramFromFile(const QString& filePath);
 
     Core* m_core;
     QTimer *m_runTimer;
