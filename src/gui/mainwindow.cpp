@@ -4,10 +4,10 @@
 #include <iomanip>
 
 // O construtor cria a janela e inicializa seu Core
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(Core* core, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_core(std::make_unique<Core>(1024 * 1024))
+    , m_core(core) // Armazena o ponteiro recebido
 {
     ui->setupUi(this);
 

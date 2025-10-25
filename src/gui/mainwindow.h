@@ -17,7 +17,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(Core* core, QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
@@ -26,14 +26,13 @@ private slots:
     void on_resetButton_clicked();
     void on_loadButton_clicked();
 
-    void on_run_timer_timeout();
-
 private:
     Ui::MainWindow *ui;
 
     void updateUI(); // Função helper
+    void on_run_timer_timeout();
 
-    std::unique_ptr<Core> m_core;
+    Core* m_core;
     QTimer *m_runTimer;
 };
 

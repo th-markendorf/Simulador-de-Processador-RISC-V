@@ -6,6 +6,7 @@
 #include <cstdint> // Para uint32_t
 #include <QApplication>
 
+#include "gui/launcherwindow.h"
 #include "gui/mainwindow.h"
 
 // --- FUNÇÕES HELPER PARA O MENU ---
@@ -273,12 +274,10 @@ void mostrarAjuda() {
     }
 }
 
-int main(int argc, char *argv[]) {
-    QApplication app(argc, argv);
-
-    MainWindow w;
-
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    LauncherWindow w; // <--- Alterado (Inicia o Launcher)
     w.show();
-
-    return app.exec();
+    return a.exec();
 }

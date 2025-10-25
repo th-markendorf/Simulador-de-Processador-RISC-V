@@ -32,6 +32,8 @@ add_executable(Simulador-de-Processador-RISC-V
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
         ${PROJECT_UI_FILES}
+        src/gui/launcherwindow.h src/gui/launcherwindow.cpp src/gui/launcherwindow.ui
+        src/gui/demowindow.h src/gui/demowindow.cpp src/gui/demowindow.ui
 )
 
 target_link_libraries(Simulador-de-Processador-RISC-V PRIVATE Qt6::Widgets)
