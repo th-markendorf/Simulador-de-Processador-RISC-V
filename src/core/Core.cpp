@@ -2,6 +2,7 @@
 
 #include <array>
 #include <iomanip>
+#include <limits>
 #include <ostream>
 
 Core::Core(size_t tamanho_memoria) : memoria(tamanho_memoria, 0) {
@@ -213,69 +214,183 @@ std::string Core::handle_op_reg(const Instruction &inst) {
     uint32_t funct3 = inst.funct3();
     uint32_t funct7 = inst.funct7();
 
-    if (funct3 == 0x0 && funct7 == 0x00) {
-        // ADD
-        log_ss << "Executando ADD x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] + registradores[rs2];
+    // Busca os valores dos registradores
+    // É crucial obter as versões signed e unsigned ANTES do switch
+    int32_t rs1_val_signed = static_cast<int32_t>(registradores[rs1]);
+    int32_t rs2_val_signed = static_cast<int32_t>(registradores[rs2]);
+    uint32_t rs1_val_unsigned = registradores[rs1];
+    uint32_t rs2_val_unsigned = registradores[rs2];
+
+    if (funct7 == 0x01) {
+        switch (funct3) {
+            case 0x0: // MUL: Multiplicação (bits baixos)
+                log_ss << "Executando MUL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    int64_t resultado = static_cast<int64_t>(rs1_val_signed) * static_cast<int64_t>(rs2_val_signed);
+                    registradores[rd] = static_cast<uint32_t>(resultado & 0xFFFFFFFF);
+                }
+                break;
+            case 0x1: // MULH: Multiplicação Signed-Signed (bits altos)
+                log_ss << "Executando MULH x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    int64_t resultado = static_cast<int64_t>(rs1_val_signed) * static_cast<int64_t>(rs2_val_signed);
+                    registradores[rd] = static_cast<uint32_t>(resultado >> 32);
+                }
+                break;
+            case 0x2: // MULHSU: Multiplicação Signed(rs1)-Unsigned(rs2) (bits altos)
+                log_ss << "Executando MULHSU x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    int64_t op1_s64 = static_cast<int64_t>(rs1_val_signed);
+                    uint64_t op2_u64 = static_cast<uint64_t>(rs2_val_unsigned);
+
+                    uint64_t resultado;
+                    if (op1_s64 < 0) {
+                        resultado = static_cast<uint64_t>(op1_s64) * op2_u64;
+                    } else {
+                        resultado = static_cast<uint64_t>(op1_s64) * op2_u64;
+                    }
+                    uint64_t res_u = static_cast<uint64_t>(op1_s64) * op2_u64;
+                    registradores[rd] = static_cast<uint32_t>(res_u >> 32);
+                }
+                break;
+            case 0x3: // MULHU: Multiplicação Unsigned-Unsigned (bits altos)
+                log_ss << "Executando MULHU x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    uint64_t resultado = static_cast<uint64_t>(rs1_val_unsigned) * static_cast<uint64_t>(
+                                             rs2_val_unsigned);
+                    registradores[rd] = static_cast<uint32_t>(resultado >> 32);
+                }
+                break;
+            case 0x4: // DIV: Divisão Signed
+                log_ss << "Executando DIV x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    if (rs2_val_signed == 0) {
+                        registradores[rd] = 0xFFFFFFFF;
+                    } else if (rs1_val_signed == std::numeric_limits<int32_t>::min() && rs2_val_signed == -1) {
+                        registradores[rd] = rs1_val_unsigned;
+                    } else {
+                        registradores[rd] = static_cast<uint32_t>(rs1_val_signed / rs2_val_signed);
+                    }
+                }
+                break;
+            case 0x5: // DIVU: Divisão Unsigned
+                log_ss << "Executando DIVU x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    if (rs2_val_unsigned == 0) {
+                        registradores[rd] = 0xFFFFFFFF;
+                    } else {
+                        registradores[rd] = rs1_val_unsigned / rs2_val_unsigned;
+                    }
+                }
+                break;
+            case 0x6: // REM: Resto da Divisão Signed
+                log_ss << "Executando REM x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    if (rs2_val_signed == 0) {
+                        registradores[rd] = rs1_val_unsigned;
+                    } else if (rs1_val_signed == std::numeric_limits<int32_t>::min() && rs2_val_signed == -1) {
+                        registradores[rd] = 0;
+                    } else {
+                        registradores[rd] = static_cast<uint32_t>(rs1_val_signed % rs2_val_signed);
+                    }
+                }
+                break;
+            case 0x7: // REMU: Resto da Divisão Unsigned
+                log_ss << "Executando REMU x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    if (rs2_val_unsigned == 0) {
+                        // Resto de divisão por zero: resultado é o dividendo (rs1)
+                        registradores[rd] = rs1_val_unsigned;
+                    } else {
+                        registradores[rd] = rs1_val_unsigned % rs2_val_unsigned;
+                    }
+                }
+                break;
+            default:
+                log_ss << "ERRO: Tipo-R (Extensao M) com funct3 desconhecido: 0x" << std::hex << funct3;
+                break;
         }
-    } else if (funct3 == 0x0 && funct7 == 0x20) {
-        // SUB
-        log_ss << "Executando SUB x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] - registradores[rs2];
-        }
-    } else if (funct3 == 0x2 && funct7 == 0x00) {
-        // SLT
-        log_ss << "Executando SLT x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = (static_cast<int32_t>(registradores[rs1]) < static_cast<int32_t>(registradores[rs2]))
-                                    ? 1
-                                    : 0;
-        }
-    } else if (funct3 == 0x4 && funct7 == 0x00) {
-        // XOR
-        log_ss << "Executando XOR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] ^ registradores[rs2];
-        }
-    } else if (funct3 == 0x6 && funct7 == 0x00) {
-        // OR
-        log_ss << "Executando OR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] | registradores[rs2];
-        }
-    } else if (funct3 == 0x7 && funct7 == 0x00) {
-        // AND
-        log_ss << "Executando AND x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] & registradores[rs2];
-        }
-    } else if (funct3 == 0x1 && funct7 == 0x00) {
-        // SLL
-        uint32_t shamt = registradores[rs2] & 0x1F; // Usa os 5 bits de baixo de rs2
-        log_ss << "Executando SLL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] << shamt;
-        }
-    } else if (funct3 == 0x5 && funct7 == 0x00) {
-        // SRL
-        uint32_t shamt = registradores[rs2] & 0x1F;
-        log_ss << "Executando SRL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = registradores[rs1] >> shamt;
-        }
-    } else if (funct3 == 0x5 && funct7 == 0x20) {
-        // SRA
-        uint32_t shamt = registradores[rs2] & 0x1F;
-        log_ss << "Executando SRA x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
-        if (rd != 0) {
-            registradores[rd] = static_cast<int32_t>(registradores[rs1]) >> shamt;
+    } else if (funct7 == 0x00 || funct7 == 0x20) {
+        switch (funct3) {
+            case 0x0: // ADD ou SUB
+                if (funct7 == 0x00) {
+                    // ADD
+                    log_ss << "Executando ADD x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                    if (rd != 0) {
+                        registradores[rd] = rs1_val_unsigned + rs2_val_unsigned;
+                    }
+                } else {
+                    // SUB (funct7 == 0x20)
+                    log_ss << "Executando SUB x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                    if (rd != 0) {
+                        registradores[rd] = rs1_val_unsigned - rs2_val_unsigned;
+                    }
+                }
+                break;
+            case 0x1: // SLL
+                log_ss << "Executando SLL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    uint32_t shamt = rs2_val_unsigned & 0x1F; // shamt são os 5 bits de baixo de rs2
+                    registradores[rd] = rs1_val_unsigned << shamt;
+                }
+                break;
+            case 0x2: // SLT (Set Less Than, Signed)
+                log_ss << "Executando SLT x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    registradores[rd] = (rs1_val_signed < rs2_val_signed) ? 1 : 0;
+                }
+                break;
+            case 0x3: // SLTU (Set Less Than, Unsigned)
+                log_ss << "Executando SLTU x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    registradores[rd] = (rs1_val_unsigned < rs2_val_unsigned) ? 1 : 0;
+                }
+                break;
+            case 0x4: // XOR
+                log_ss << "Executando XOR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    registradores[rd] = rs1_val_unsigned ^ rs2_val_unsigned;
+                }
+                break;
+            case 0x5: // SRL ou SRA
+                if (funct7 == 0x00) {
+                    // SRL (Shift Right Logical)
+                    log_ss << "Executando SRL x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                    if (rd != 0) {
+                        uint32_t shamt = rs2_val_unsigned & 0x1F;
+                        registradores[rd] = rs1_val_unsigned >> shamt;
+                    }
+                } else {
+                    // SRA (Shift Right Arithmetic) (funct7 == 0x20)
+                    log_ss << "Executando SRA x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                    if (rd != 0) {
+                        uint32_t shamt = rs2_val_unsigned & 0x1F;
+                        // Faz o cast para signed ANTES do shift
+                        registradores[rd] = static_cast<uint32_t>(rs1_val_signed >> shamt);
+                    }
+                }
+                break;
+            case 0x6: // OR
+                log_ss << "Executando OR x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    registradores[rd] = rs1_val_unsigned | rs2_val_unsigned;
+                }
+                break;
+            case 0x7: // AND
+                log_ss << "Executando AND x" << std::dec << rd << ", x" << rs1 << ", x" << rs2;
+                if (rd != 0) {
+                    registradores[rd] = rs1_val_unsigned & rs2_val_unsigned;
+                }
+                break;
+            default:
+                log_ss << "ERRO: Tipo-R (Base) com funct3 desconhecido: 0x" << std::hex << funct3;
+                break;
         }
     } else {
-        log_ss << "ERRO: Tipo-R com funct3/funct7 desconhecido!";
+        log_ss << "ERRO: Tipo-R com funct7 desconhecido: 0x" << std::hex << funct7;
     }
 
+    // Avança o PC (para todos os casos do Tipo-R)
     contador_programa += 4;
     return log_ss.str();
 }
