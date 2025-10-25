@@ -6,6 +6,15 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QTableWidget>
+#include <QHeaderView>
+
+static const std::array<QString, 32> abiNames = {
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+};
 
 // O construtor cria a janela e inicializa seu Core
 MainWindow::MainWindow(Core* core, QWidget *parent)
@@ -20,7 +29,24 @@ MainWindow::MainWindow(Core* core, QWidget *parent)
 
     // Deixa as caixas de texto como "somente leitura"
     ui->logView->setReadOnly(true);
-    ui->registersView->setReadOnly(true);
+    ui->registersTable->setColumnCount(4);
+    ui->registersTable->setHorizontalHeaderLabels(QStringList() << "Reg" << "ABI" << "Hexadecimal" << "Decimal");
+    ui->registersTable->setRowCount(33); // x0-x31 + pc
+
+    for (int i = 0; i < 32; ++i) {
+        ui->registersTable->setItem(i, 0, new QTableWidgetItem(QString("x%1").arg(i)));
+        ui->registersTable->setItem(i, 1, new QTableWidgetItem(abiNames[i]));
+    }
+    ui->registersTable->setItem(32, 0, new QTableWidgetItem("pc"));
+    ui->registersTable->setItem(32, 1, new QTableWidgetItem("-"));
+
+    ui->registersTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    ui->registersTable->setFixedWidth(435);
+
+    ui->registersTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    ui->registersTable->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 
     m_core->reset(); // Garante que o core esteja zerado
     ui->logView->append("Simulador iniciado. Use 'Load' para carregar um programa.");
@@ -129,20 +155,25 @@ void MainWindow::updateUI()
     std::array<uint32_t, 32> regs = m_core->get_registradores();
     uint32_t pc = m_core->get_program_counter();
 
-    // Formata o texto
-    std::stringstream ss_regs;
-    ss_regs << std::hex << std::setfill('0');
-
+    // 1. Formata e preenche os registradores (x0-x31)
     for (int i = 0; i < 32; ++i) {
-        ss_regs << "x" << std::setw(2) << std::dec << i << ": "
-                << "0x" << std::setw(8) << std::hex << regs[i] << "\n";
+        uint32_t valor = regs[i];
+
+        // Coluna 2: Hexadecimal
+        QString hexVal = QString("0x%1").arg(valor, 8, 16, QChar('0'));
+        ui->registersTable->setItem(i, 2, new QTableWidgetItem(hexVal));
+
+        // Coluna 3: Decimal
+        // Converte para int32_t para exibir valores negativos corretamente
+        QString decVal = QString::number(static_cast<int32_t>(valor));
+        ui->registersTable->setItem(i, 3, new QTableWidgetItem(decVal));
     }
 
-    ss_regs << "pc: "
-            << "0x" << std::setw(8) << std::hex << pc << "\n";
-
-    // Envia o texto formatado para a caixa 'registersView'
-    ui->registersView->setText(QString::fromStdString(ss_regs.str()));
+    // 2. Formata e preenche o PC (Linha 32)
+    QString hexPC = QString("0x%1").arg(pc, 8, 16, QChar('0'));
+    QString decPC = QString::number(pc);
+    ui->registersTable->setItem(32, 2, new QTableWidgetItem(hexPC));
+    ui->registersTable->setItem(32, 3, new QTableWidgetItem(decPC));
 }
 
 /**

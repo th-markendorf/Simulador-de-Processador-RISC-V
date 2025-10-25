@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="stepButton">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>190</y>
+      <x>390</x>
+      <y>130</y>
       <width>94</width>
       <height>26</height>
      </rect>
@@ -30,8 +30,8 @@
    <widget class="QPushButton" name="runButton">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>190</y>
+      <x>260</x>
+      <y>130</y>
       <width>94</width>
       <height>26</height>
      </rect>
@@ -43,8 +43,8 @@
    <widget class="QPushButton" name="resetButton">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>190</y>
+      <x>500</x>
+      <y>130</y>
       <width>94</width>
       <height>26</height>
      </rect>
@@ -56,8 +56,8 @@
    <widget class="QPushButton" name="loadButton">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>190</y>
+      <x>130</x>
+      <y>130</y>
       <width>94</width>
       <height>26</height>
      </rect>
@@ -66,22 +66,12 @@
      <string>Load</string>
     </property>
    </widget>
-   <widget class="QTextEdit" name="registersView">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>310</y>
-      <width>701</width>
-      <height>70</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QTextEdit" name="logView">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>50</x>
       <y>440</y>
-      <width>711</width>
+      <width>701</width>
       <height>70</height>
      </rect>
     </property>
@@ -90,7 +80,7 @@
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>410</y>
+      <y>420</y>
       <width>66</width>
       <height>18</height>
      </rect>
@@ -103,14 +93,67 @@
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>270</y>
-      <width>66</width>
+      <y>180</y>
+      <width>81</width>
       <height>18</height>
      </rect>
     </property>
     <property name="text">
      <string>Registradores</string>
     </property>
+   </widget>
+   <widget class="QTableWidget" name="registersTable">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>200</y>
+      <width>435</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <property name="rowCount">
+     <number>33</number>
+    </property>
+    <property name="columnCount">
+     <number>4</number>
+    </property>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -119,7 +162,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

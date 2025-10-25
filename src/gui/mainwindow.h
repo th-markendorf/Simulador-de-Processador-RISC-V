@@ -10,6 +10,8 @@
 #include <QTextStream>
 #include <QMessageBox>
 
+#include <QTableWidget>
+
 #include "core/Core.h"
 
 QT_BEGIN_NAMESPACE
