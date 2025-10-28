@@ -181,9 +181,9 @@
    <widget class="QPushButton" name="execButton">
     <property name="geometry">
      <rect>
-      <x>700</x>
+      <x>540</x>
       <y>60</y>
-      <width>94</width>
+      <width>131</width>
       <height>26</height>
      </rect>
     </property>
@@ -191,23 +191,23 @@
      <string>Executar</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="setRegButton">
+   <widget class="QPushButton" name="setRegButtonRs1">
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>50</y>
+      <x>370</x>
+      <y>30</y>
       <width>161</width>
       <height>26</height>
      </rect>
     </property>
     <property name="text">
-     <string>Definir Valor (RS1/RS2)</string>
+     <string>Definir Valor em RS1</string>
     </property>
    </widget>
    <widget class="QSpinBox" name="spinRegValor">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>250</x>
       <y>50</y>
       <width>111</width>
       <height>27</height>
@@ -218,7 +218,7 @@
     <property name="geometry">
      <rect>
       <x>250</x>
-      <y>50</y>
+      <y>30</y>
       <width>131</width>
       <height>18</height>
      </rect>
@@ -332,6 +332,32 @@
     <column/>
     <column/>
     <column/>
+   </widget>
+   <widget class="QPushButton" name="setRegButtonRs2">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>60</y>
+      <width>161</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Definir Valor em RS2</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="resetRegsButton">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>30</y>
+      <width>131</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Resetar Registradores</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

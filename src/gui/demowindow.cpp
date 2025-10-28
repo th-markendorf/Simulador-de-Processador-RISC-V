@@ -83,32 +83,44 @@ void DemoWindow::on_comboInstrucao_currentIndexChanged(int index) {
         // Tipo R: Habilita rs2, desabilita imediato
         ui->spinRs2->setEnabled(true);
         ui->spinImm->setEnabled(false);
+        ui->setRegButtonRs2->setEnabled(true);
     } else {
         // 0x13 é o OPCODE_I (ADDI, ANDI, etc.)
         // Tipo I: Desabilita rs2, habilita imediato
         ui->spinRs2->setEnabled(false);
         ui->spinImm->setEnabled(true);
+        ui->setRegButtonRs2->setEnabled(false);
     }
 }
 
-// Slot do botão "Definir Valor (em rs1/rs2)"
-void DemoWindow::on_setRegButton_clicked() {
+/**
+ * @brief Slot do botão "Definir Valor em RS1"
+ */
+void DemoWindow::on_setRegButtonRs1_clicked() {
     int32_t valor = ui->spinRegValor->value();
     int highlightReg1 = ui->spinRs1->value();
 
-    // Define o valor em rs1
-    m_core->set_register(ui->spinRs1->value(), valor);
-
-    // Se for Tipo R, define também em rs2
-    if (ui->spinRs2->isEnabled()) {
-        m_core->set_register(ui->spinRs2->value(), valor);
-        ui->logView->append(QString("Valores definidos em rs1 e rs2."));
-    } else {
-        ui->logView->append(QString("Valor definido em rs1."));
-    }
+    // Define o valor apenas em rs1
+    m_core->set_register(highlightReg1, valor);
+    ui->logView->append(QString("Valor %1 definido em x%2 (rs1).").arg(valor).arg(highlightReg1));
 
     // Mostra o estado "Antes"
     updateRegistersView(ui->registersTableAntes, highlightReg1);
+}
+
+/**
+ * @brief Slot do botão "Definir Valor em RS2"
+ */
+void DemoWindow::on_setRegButtonRs2_clicked() {
+    int32_t valor = ui->spinRegValor->value();
+    int highlightReg2 = ui->spinRs2->value();
+
+    // Define o valor apenas em rs2
+    m_core->set_register(highlightReg2, valor);
+    ui->logView->append(QString("Valor %1 definido em x%2 (rs2).").arg(valor).arg(highlightReg2));
+
+    // Mostra o estado "Antes"
+    updateRegistersView(ui->registersTableAntes, highlightReg2);
 }
 
 // Slot do botão "Executar Instrução"
@@ -210,6 +222,25 @@ void DemoWindow::updateRegistersView(QTableWidget *view, int highlightedRd) {
 
     view->setItem(32, 2, pcHexItem);
     view->setItem(32, 3, pcDecItem);
+}
+
+/**
+ * @brief Slot para o botão "Resetar Registradores".
+ * Reseta o core e limpa ambas as tabelas de visualização.
+ */
+void DemoWindow::on_resetRegsButton_clicked()
+{
+    // 1. Chama o reset do Core
+    m_core->reset(); //
+
+    // 2. Atualiza a tabela "Antes" (agora zerada)
+    updateRegistersView(ui->registersTableAntes, -1); // -1 = sem destaque
+
+    // 3. Atualiza a tabela "Depois" (agora zerada)
+    updateRegistersView(ui->registersTableDepois, -1);
+
+    // 4. Adiciona uma mensagem ao log
+    ui->logView->append("Registradores resetados para 0.");
 }
 
 // Funções helper portadas do seu main.cpp

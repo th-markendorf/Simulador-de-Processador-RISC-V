@@ -28,11 +28,13 @@ private slots:
     // Slot para o botão "Executar"
     void on_execButton_clicked();
 
-    // Slot para o botão "Definir Valor"
-    void on_setRegButton_clicked();
+    void on_setRegButtonRs1_clicked();
+    void on_setRegButtonRs2_clicked();
 
     // Slot para atualizar a UI quando a instrução mudar (ex: esconder rs2)
     void on_comboInstrucao_currentIndexChanged(int index);
+
+    void on_resetRegsButton_clicked();
 
 private:
     void updateRegistersView(QTableWidget *view, int highlightedRd);
