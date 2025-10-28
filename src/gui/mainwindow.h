@@ -4,12 +4,12 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <memory>
-
 #include <QFileDialog>
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
-
+#include <QTabWidget>
+#include <QLineEdit>
 #include <QTableWidget>
 
 #include "core/Core.h"
@@ -32,6 +32,7 @@ private slots:
     void on_runButton_clicked();
     void on_resetButton_clicked();
     void on_loadButton_clicked();
+    void on_memInspectButton_clicked();
 
 private:
     Ui::MainWindow *ui;

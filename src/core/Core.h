@@ -19,6 +19,7 @@ public:
     uint32_t get_program_counter() const;
     bool is_finished() const;
     std::string set_register(int reg_index, uint32_t valor);
+    uint8_t get_byte_memoria(uint32_t endereco) const;
 
 private:
     uint32_t fetch();

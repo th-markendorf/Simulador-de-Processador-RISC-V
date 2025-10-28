@@ -2,7 +2,8 @@
 #define DEMOWINDOW_H
 
 #include <QMainWindow>
-#include <QTextEdit>
+#include <QTableWidget>
+#include <QHeaderView>
 
 #include "core/Core.h"
 
@@ -34,15 +35,16 @@ private slots:
     void on_comboInstrucao_currentIndexChanged(int index);
 
 private:
-    void updateRegistersView(QTextEdit *view); // Mostra os registradores
+    void updateRegistersView(QTableWidget *view, int highlightedRd);
 
     // Funções helper portadas do seu main.cpp
     uint32_t montar_tipo_R(uint32_t funct7, uint32_t rs2, uint32_t rs1, uint32_t funct3, uint32_t rd, uint32_t opcode);
-
     uint32_t montar_tipo_I(int32_t imm, uint32_t rs1, uint32_t funct3, uint32_t rd, uint32_t opcode);
 
     Ui::DemoWindow *ui;
     Core *m_core; // Ponteiro para o Core (não o possui)
+
+    const QBrush m_highlightBrush;
 };
 
 #endif // DEMOWINDOW_H

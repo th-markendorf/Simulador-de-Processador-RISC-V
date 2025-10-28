@@ -501,3 +501,12 @@ std::string Core::handle_jal(const Instruction &inst) {
     // Nota: O PC não é incrementado por 4 aqui! O 'offset' é o novo PC.
     return log_ss.str();
 }
+
+uint8_t Core::get_byte_memoria(uint32_t endereco) const {
+    if (endereco >= memoria.size()) {
+        // Endereço fora dos limites, retorna 0
+        return 0;
+    }
+    // Retorna o byte diretamente da memória principal
+    return memoria[endereco];
+}

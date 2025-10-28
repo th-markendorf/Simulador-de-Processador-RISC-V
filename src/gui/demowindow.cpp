@@ -1,17 +1,46 @@
 #include "demowindow.h"
+#include "ui_demowindow.h"
 #include <sstream>
 #include <iomanip>
-#include "ui_demowindow.h"
+
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QBrush>
+
+static const std::array<QString, 32> abiNames = {
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+};
 
 // Construtor
 DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
                                                       ui(new Ui::DemoWindow),
-                                                      m_core(core) // Armazena o ponteiro do Core
-{
+                                                      m_core(core), // Armazena o ponteiro do Core
+                                                      m_highlightBrush(QColor(80, 80, 80)) {
     ui->setupUi(this);
     ui->logView->setReadOnly(true);
-    ui->registersViewAntes->setReadOnly(true);
-    ui->registersViewDepois->setReadOnly(true);
+
+    // Configura AMBAS as tabelas
+    for (QTableWidget *table: {ui->registersTableAntes, ui->registersTableDepois}) {
+        table->setColumnCount(4);
+        table->setHorizontalHeaderLabels(QStringList() << "Reg" << "ABI" << "Hex" << "Dec");
+        table->setRowCount(33); // x0-x31 + pc
+
+        // Adiciona os nomes dos registradores
+        for (int i = 0; i < 32; ++i) {
+            table->setItem(i, 0, new QTableWidgetItem(QString("x%1").arg(i)));
+            table->setItem(i, 1, new QTableWidgetItem(abiNames[i]));
+        }
+        table->setItem(32, 0, new QTableWidgetItem("pc"));
+        table->setItem(32, 1, new QTableWidgetItem("-"));
+
+        // Trava a edição e o tamanho
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    }
 
     // Preenche o ComboBox com as instruções
     ui->comboInstrucao->addItem("ADD", 0x33);
@@ -37,8 +66,8 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
     // Inicia a UI
     on_comboInstrucao_currentIndexChanged(0);
     m_core->reset();
-    updateRegistersView(ui->registersViewAntes);
-    updateRegistersView(ui->registersViewDepois);
+    updateRegistersView(ui->registersTableAntes, -1); // -1 = sem destaque
+    updateRegistersView(ui->registersTableDepois, -1);
 }
 
 DemoWindow::~DemoWindow() {
@@ -49,11 +78,13 @@ DemoWindow::~DemoWindow() {
 void DemoWindow::on_comboInstrucao_currentIndexChanged(int index) {
     uint32_t opcode = ui->comboInstrucao->itemData(index).toUInt();
 
-    if (opcode == 0x33) { // 0x33 é o OPCODE_R (ADD, SUB, MUL, DIV, etc.)
+    if (opcode == 0x33) {
+        // 0x33 é o OPCODE_R (ADD, SUB, MUL, DIV, etc.)
         // Tipo R: Habilita rs2, desabilita imediato
         ui->spinRs2->setEnabled(true);
         ui->spinImm->setEnabled(false);
-    } else { // 0x13 é o OPCODE_I (ADDI, ANDI, etc.)
+    } else {
+        // 0x13 é o OPCODE_I (ADDI, ANDI, etc.)
         // Tipo I: Desabilita rs2, habilita imediato
         ui->spinRs2->setEnabled(false);
         ui->spinImm->setEnabled(true);
@@ -63,6 +94,7 @@ void DemoWindow::on_comboInstrucao_currentIndexChanged(int index) {
 // Slot do botão "Definir Valor (em rs1/rs2)"
 void DemoWindow::on_setRegButton_clicked() {
     int32_t valor = ui->spinRegValor->value();
+    int highlightReg1 = ui->spinRs1->value();
 
     // Define o valor em rs1
     m_core->set_register(ui->spinRs1->value(), valor);
@@ -76,7 +108,7 @@ void DemoWindow::on_setRegButton_clicked() {
     }
 
     // Mostra o estado "Antes"
-    updateRegistersView(ui->registersViewAntes);
+    updateRegistersView(ui->registersTableAntes, highlightReg1);
 }
 
 // Slot do botão "Executar Instrução"
@@ -98,7 +130,6 @@ void DemoWindow::on_execButton_clicked() {
         instrucao_codificada = montar_tipo_R(0x00, rs2, rs1, 0x0, rd, OPCODE_R);
     } else if (instrucao == "SUB") {
         instrucao_codificada = montar_tipo_R(0x20, rs2, rs1, 0x0, rd, OPCODE_R);
-
     } else if (instrucao == "MUL") {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x0, rd, OPCODE_R);
     } else if (instrucao == "MULH") {
@@ -113,8 +144,7 @@ void DemoWindow::on_execButton_clicked() {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x6, rd, OPCODE_R);
     } else if (instrucao == "REMU") {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x7, rd, OPCODE_R);
-    // --- FIM DOS NOVOS BLOCOS ---
-
+        // --- FIM DOS NOVOS BLOCOS ---
     } else if (instrucao == "ADDI") {
         instrucao_codificada = montar_tipo_I(imm, rs1, 0x0, rd, OPCODE_I);
     } else if (instrucao == "ANDI") {
@@ -131,24 +161,55 @@ void DemoWindow::on_execButton_clicked() {
     ui->logView->append(QString::fromStdString(log));
 
     // 4. Mostra o resultado
-    updateRegistersView(ui->registersViewDepois);
+    updateRegistersView(ui->registersTableDepois, rd);
 }
 
-// Função para exibir registradores (como a updateUI da MainWindow)
-void DemoWindow::updateRegistersView(QTextEdit *view) {
+/**
+ * @brief Função para exibir registradores em uma tabela, com destaque opcional.
+ */
+void DemoWindow::updateRegistersView(QTableWidget *view, int highlightedRd) {
     std::array<uint32_t, 32> regs = m_core->get_registradores();
     uint32_t pc = m_core->get_program_counter();
 
-    std::stringstream ss_regs;
-    ss_regs << std::hex << std::setfill('0');
+    // Reseta a cor de fundo padrão (necessário para limpar destaques antigos)
+    const QBrush defaultBrush = view->palette().base();
 
-    for (int i = 0; i < 32; ++i) {
-        ss_regs << "x" << std::setw(2) << std::dec << i << ": "
-                << "0x" << std::setw(8) << std::hex << regs[i] << "\n";
+    // 1. Formata e preenche os registradores (x0-x31)
+    for (int i = 0; i < 32; ++i) { // O loop agora é 'i < 32'
+        uint32_t valor = regs[i];
+
+        // Coluna 2: Hexadecimal
+        QString hexVal = QString("0x%1").arg(valor, 8, 16, QChar('0'));
+        QTableWidgetItem* hexItem = new QTableWidgetItem(hexVal);
+
+        // Coluna 3: Decimal
+        QString decVal = QString::number(static_cast<int32_t>(valor));
+        QTableWidgetItem* decItem = new QTableWidgetItem(decVal);
+
+        // Define o destaque (ou reseta)
+        if (i == highlightedRd && i != 0) { // Destaca se for o 'rd' (e não for x0)
+            hexItem->setBackground(m_highlightBrush);
+            decItem->setBackground(m_highlightBrush);
+        } else {
+            hexItem->setBackground(defaultBrush);
+            decItem->setBackground(defaultBrush);
+        }
+
+        view->setItem(i, 2, hexItem);
+        view->setItem(i, 3, decItem);
     }
-    ss_regs << "pc: " << "0x" << std::setw(8) << std::hex << pc << "\n";
 
-    view->setText(QString::fromStdString(ss_regs.str()));
+    // 2. Formata e preenche o PC (Linha 32)
+    QString hexPC = QString("0x%1").arg(pc, 8, 16, QChar('0'));
+    QString decPC = QString::number(pc);
+
+    QTableWidgetItem* pcHexItem = new QTableWidgetItem(hexPC);
+    QTableWidgetItem* pcDecItem = new QTableWidgetItem(decPC);
+    pcHexItem->setBackground(defaultBrush); // Garante que o PC não tenha destaque
+    pcDecItem->setBackground(defaultBrush);
+
+    view->setItem(32, 2, pcHexItem);
+    view->setItem(32, 3, pcDecItem);
 }
 
 // Funções helper portadas do seu main.cpp

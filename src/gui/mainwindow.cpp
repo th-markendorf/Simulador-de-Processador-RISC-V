@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <QTableWidget>
 #include <QHeaderView>
+#include <QTabWidget>
+#include <QLineEdit>
 
 static const std::array<QString, 32> abiNames = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -47,6 +49,25 @@ MainWindow::MainWindow(Core* core, QWidget *parent)
     ui->registersTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->registersTable->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+
+    // Configura a tabela de memória (16 bytes por linha)
+    const int memCols = 17; // 1 Endereço + 16 Bytes
+    ui->memoryTable->setColumnCount(memCols + 1); // +1 para a coluna ASCII
+    ui->memoryTable->setRowCount(16); // Vamos mostrar 16 linhas (16 * 16 = 256 bytes)
+
+    // Configura os cabeçalhos das colunas
+    QStringList memHeaders;
+    memHeaders << "Endereço";
+    for(int i = 0; i < 16; ++i) {
+        memHeaders << QString("+%1").arg(i, 2, 16, QChar('0')).toUpper();
+    }
+    memHeaders << "ASCII";
+    ui->memoryTable->setHorizontalHeaderLabels(memHeaders);
+
+    // Trava a edição
+    ui->memoryTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    // Ajusta o tamanho das colunas
+    ui->memoryTable->resizeColumnsToContents();
 
     m_core->reset(); // Garante que o core esteja zerado
     ui->logView->append("Simulador iniciado. Use 'Load' para carregar um programa.");
@@ -239,4 +260,55 @@ void MainWindow::loadProgramFromFile(const QString &filePath)
     ui->logView->append(QString("Programa carregado de %1. Total de %2 instrucoes (+1 nula).")
                         .arg(filePath).arg(programa.size() - 1));
     updateUI(); // Atualiza a exibição dos registradores
+}
+
+void MainWindow::on_memInspectButton_clicked()
+{
+    // 1. Obter o endereço do QLineEdit (memAddressInput)
+    QString addressStr = ui->memAddressInput->text();
+    bool ok;
+    uint32_t startAddress = addressStr.toUInt(&ok, 0); // 0 auto-detecta base (Hex)
+
+    if (!ok) {
+        ui->logView->append("[ERRO] Endereço de memória inválido: " + addressStr);
+        return;
+    }
+
+    // 2. Alinhar o endereço para 16 bytes (opcional, mas limpo)
+    startAddress &= ~0x0F; // Zera os últimos 4 bits
+
+    // 3. Preencher a tabela (16 linhas x 16 bytes)
+    for (int row = 0; row < 16; ++row) {
+        uint32_t rowAddress = startAddress + (row * 16);
+
+        // Coluna 0: Endereço da Linha
+        QString hexAddr = QString("0x%1").arg(rowAddress, 8, 16, QChar('0'));
+        ui->memoryTable->setItem(row, 0, new QTableWidgetItem(hexAddr));
+
+        QString asciiString = ""; // String para a última coluna
+
+        // Colunas 1-16: Bytes de Dados
+        for (int col = 0; col < 16; ++col) {
+            uint32_t currentAddress = rowAddress + col;
+            uint8_t byte = m_core->get_byte_memoria(currentAddress);
+
+            // Coluna de Byte (Hex)
+            QString hexByte = QString("%1").arg(byte, 2, 16, QChar('0')).toUpper();
+            ui->memoryTable->setItem(row, col + 1, new QTableWidgetItem(hexByte));
+
+            // Constrói a string ASCII
+            if (byte >= 32 && byte <= 126) { // Caractere imprimível
+                asciiString += static_cast<char>(byte);
+            } else {
+                asciiString += "."; // caractere não imprimível
+            }
+        }
+
+        // Coluna 17: String ASCII
+        ui->memoryTable->setItem(row, 17, new QTableWidgetItem(asciiString));
+    }
+
+    // 4. Ajustar colunas (apenas na primeira vez, opcional)
+    ui->memoryTable->resizeColumnsToContents();
+    ui->logView->append(QString("[INFO] Visualização da memória atualizada a partir de %1").arg(QString("0x%1").arg(startAddress, 8, 16, QChar('0'))));
 }
