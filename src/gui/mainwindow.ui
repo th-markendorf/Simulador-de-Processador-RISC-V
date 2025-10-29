@@ -6,21 +6,216 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>819</width>
     <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>401</y>
+      <width>801</width>
+      <height>141</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>6</number>
+     </property>
+     <item row="0" column="1" rowspan="2">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Logs</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QTextEdit" name="logView"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QTabWidget" name="mainTabWidget">
+    <property name="geometry">
+     <rect>
+      <x>8</x>
+      <y>10</y>
+      <width>811</width>
+      <height>381</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Processador</string>
+     </attribute>
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>190</x>
+        <y>0</y>
+        <width>431</width>
+        <height>341</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QPushButton" name="loadButton">
+         <property name="text">
+          <string>Load</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="runButton">
+         <property name="text">
+          <string>Run</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="stepButton">
+         <property name="text">
+          <string>Step</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="resetButton">
+         <property name="text">
+          <string>Reset</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Registradores</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="registersTable">
+         <property name="rowCount">
+          <number>33</number>
+         </property>
+         <property name="columnCount">
+          <number>4</number>
+         </property>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <row/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Memória</string>
+     </attribute>
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>20</y>
+        <width>131</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Endereço Inicial (Hex):</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="memAddressInput">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>40</y>
+        <width>121</width>
+        <height>21</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="memInspectButton">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>40</y>
+        <width>79</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Inspecionar</string>
+      </property>
+     </widget>
+     <widget class="QTableWidget" name="memoryTable">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>70</y>
+        <width>731</width>
+        <height>271</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
-     <height>23</height>
+     <width>819</width>
+     <height>33</height>
     </rect>
    </property>
   </widget>

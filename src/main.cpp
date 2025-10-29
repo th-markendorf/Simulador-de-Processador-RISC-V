@@ -4,6 +4,10 @@
 #include <vector>
 #include <limits>
 #include <cstdint> // Para uint32_t
+#include <QApplication>
+
+#include "gui/launcherwindow.h"
+#include "gui/mainwindow.h"
 
 // --- FUNÇÕES HELPER PARA O MENU ---
 
@@ -22,7 +26,7 @@ int lerNumero() {
 }
 
 // Pede ao usuário um índice de registrador (ex: 5 para x5)
-uint32_t lerRegistrador(const std::string& nome_reg) {
+uint32_t lerRegistrador(const std::string &nome_reg) {
     while (true) {
         std::cout << "  Digite o registrador " << nome_reg << " (0-31): ";
         int reg = lerNumero();
@@ -52,7 +56,8 @@ uint32_t montar_tipo_R(uint32_t funct7, uint32_t rs2, uint32_t rs1, uint32_t fun
 uint32_t montar_tipo_I(int32_t imm, uint32_t rs1, uint32_t funct3, uint32_t rd, uint32_t opcode) {
     return (static_cast<uint32_t>(imm) << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode;
 }
-void executarInstrucaoDemo(Core& core) {
+
+void executarInstrucaoDemo(Core &core) {
     std::cout << "\n--- Menu de Demonstracao de Instrucoes ---" << std::endl;
     std::cout << "Este modo permite testar uma instrucao isoladamente." << std::endl;
     std::cout << "Voce podera definir os valores iniciais dos registradores." << std::endl << std::endl;
@@ -98,20 +103,21 @@ void executarInstrucaoDemo(Core& core) {
     core.reset();
 
     // Definir valores nos registradores fonte
-    if (escolha <= 2) { // Tipo R
+    if (escolha <= 2) {
+        // Tipo R
         std::cout << "-> Preparando registradores..." << std::endl;
         std::cout << "  Qual valor inicial para x" << rs1 << "? ";
         core.set_register(rs1, lerNumero());
         std::cout << "  Qual valor inicial para x" << rs2 << "? ";
         core.set_register(rs2, lerNumero());
-    } else { // Tipo I
+    } else {
+        // Tipo I
         std::cout << "-> Preparando registradores..." << std::endl;
         std::cout << "  Qual valor inicial para x" << rs1 << "? ";
         core.set_register(rs1, lerNumero());
     }
 
     std::cout << "\n--- Estado ANTES da Execucao ---" << std::endl;
-    core.imprimir_register();
 
     // Montar a instrução
     // (A função montar_tipo_I agora vai funcionar, pois o 'imm' está limitado)
@@ -134,12 +140,11 @@ void executarInstrucaoDemo(Core& core) {
     }
 
     // Carregar e executar
-    std::vector<uint32_t> programa_demo = { instrucao_codificada, 0x00000000 };
+    std::vector<uint32_t> programa_demo = {instrucao_codificada, 0x00000000};
     core.load_program(programa_demo);
-    core.step(); 
+    core.step();
 
     std::cout << "\n--- Estado APOS a Execucao ---" << std::endl;
-    core.imprimir_register();
 
     std::cout << std::dec;
 
@@ -148,13 +153,12 @@ void executarInstrucaoDemo(Core& core) {
 }
 
 
-
-void modoSimulador(Core& core) {
+void modoSimulador(Core &core) {
     std::vector<uint32_t> programa_exemplo = {
         0xFB000313, // addi x6, x0, -80
         0x00435393, // slti x7, x6, 4
         0x40435413, // xori x8, x6, 1028
-        0x00000000  // Instrução Nula (para finalizar)
+        0x00000000 // Instrução Nula (para finalizar)
     };
     bool programa_carregado = false;
     int escolha = -1;
@@ -178,30 +182,25 @@ void modoSimulador(Core& core) {
                 core.load_program(programa_exemplo);
                 programa_carregado = true;
                 std::cout << "[INFO] Programa exemplo carregado e core resetado." << std::endl;
-                core.imprimir_register();
                 break;
             case 2:
                 if (!programa_carregado) {
-                     std::cout << "[AVISO] Nenhum programa carregado." << std::endl;
+                    std::cout << "[AVISO] Nenhum programa carregado." << std::endl;
                 } else if (core.is_finished()) {
                     std::cout << "[AVISO] Simulacao ja finalizada. Resete (5) e carregue (1)." << std::endl;
-                } else {
-                    core.run();
                 }
                 break;
             case 3:
-                 if (!programa_carregado) {
-                     std::cout << "[AVISO] Nenhum programa carregado." << std::endl;
+                if (!programa_carregado) {
+                    std::cout << "[AVISO] Nenhum programa carregado." << std::endl;
                 } else if (core.is_finished()) {
                     std::cout << "[INFO] Simulacao finalizada. Nao ha mais instrucoes." << std::endl;
                 } else {
                     std::cout << "Executando (step)..." << std::endl;
                     core.step();
-                    core.imprimir_register();
                 }
                 break;
             case 4:
-                core.imprimir_register();
                 break;
             case 5:
                 core.reset();
@@ -236,27 +235,35 @@ void mostrarAjuda() {
             case 1:
                 std::cout << "--- O que e o Modo Simulador? ---" << std::endl;
                 std::cout << "Este modo carrega um programa de exemplo pre-definido na memoria do simulador.\n"
-                          << "Voce pode executa-lo de duas formas:\n"
-                          << " - Run (Executar Completo): O simulador executa todas as instrucoes do inicio ao fim, sem parar.\n"
-                          << " - Step (Passo a Passo): O simulador executa apenas UMA instrucao e para, permitindo que voce\n"
-                          << "   analise o estado dos registradores apos cada passo.\n"
-                          << "Use esta opcao para entender como um programa completo altera o estado do processador." << std::endl;
+                        << "Voce pode executa-lo de duas formas:\n"
+                        << " - Run (Executar Completo): O simulador executa todas as instrucoes do inicio ao fim, sem parar.\n"
+                        << " - Step (Passo a Passo): O simulador executa apenas UMA instrucao e para, permitindo que voce\n"
+                        << "   analise o estado dos registradores apos cada passo.\n"
+                        << "Use esta opcao para entender como um programa completo altera o estado do processador." <<
+                        std::endl;
                 break;
             case 2:
                 std::cout << "--- O que e o Modo Demonstrador? ---" << std::endl;
                 std::cout << "Este modo funciona como um laboratorio para testar instrucoes individualmente.\n"
-                          << "Voce escolhe uma instrucao (como ADD ou ADDI), e o programa te ajuda a monta-la,\n"
-                          << "pedindo os registradores e valores necessarios.\n"
-                          << "Antes da execucao, voce define os valores iniciais nos registradores de origem.\n"
-                          << "O simulador entao executa APENAS essa instrucao e mostra o resultado.\n"
-                          << "Use esta opcao para aprender exatamente o que cada instrucao faz." << std::endl;
+                        << "Voce escolhe uma instrucao (como ADD ou ADDI), e o programa te ajuda a monta-la,\n"
+                        << "pedindo os registradores e valores necessarios.\n"
+                        << "Antes da execucao, voce define os valores iniciais nos registradores de origem.\n"
+                        << "O simulador entao executa APENAS essa instrucao e mostra o resultado.\n"
+                        << "Use esta opcao para aprender exatamente o que cada instrucao faz." << std::endl;
 
                 std::cout << "\nAs operacoes disponiveis para demonstracao sao:" << std::endl;
                 std::cout << "\n- ADD (Soma): Realiza a SOMA do valor de dois registradores (rs1 + rs2)." << std::endl;
-                std::cout << "- SUB (Subtracao): Realiza a SUBTRACAO do valor de dois registradores (rs1 - rs2)." << std::endl;
-                std::cout << "- ADDI (Soma com Imediato): SOMA o valor de um registrador (rs1) com um numero fixo (o 'valor_fixo')." << std::endl;
-                std::cout << "- ANDI (E Logico com Imediato): Realiza a operacao logica 'AND' bit a bit entre um registrador e um numero fixo." << std::endl;
-                std::cout << "- ORI (OU Logico com Imediato): Realiza a operacao logica 'OR' bit a bit entre um registrador e um numero fixo." << std::endl;
+                std::cout << "- SUB (Subtracao): Realiza a SUBTRACAO do valor de dois registradores (rs1 - rs2)." <<
+                        std::endl;
+                std::cout <<
+                        "- ADDI (Soma com Imediato): SOMA o valor de um registrador (rs1) com um numero fixo (o 'valor_fixo')."
+                        << std::endl;
+                std::cout <<
+                        "- ANDI (E Logico com Imediato): Realiza a operacao logica 'AND' bit a bit entre um registrador e um numero fixo."
+                        << std::endl;
+                std::cout <<
+                        "- ORI (OU Logico com Imediato): Realiza a operacao logica 'OR' bit a bit entre um registrador e um numero fixo."
+                        << std::endl;
                 break;
         }
 
@@ -267,54 +274,10 @@ void mostrarAjuda() {
     }
 }
 
-
-int main(int argc, char *argv[]) {
-    Core core = Core(1024); // 1KB de memória
-    int escolha = -1;
-
-    while (escolha != 0) {
-        std::cout << "\n========= MENU PRINCIPAL DO SIMULADOR RISC-V =========" << std::endl;
-        std::cout << "1. Modo Simulador (Carregar e executar programas)" << std::endl;
-        std::cout << "2. Modo Demonstrador (Testar instrucoes individuais)" << std::endl;
-        std::cout << "3. Ajuda (Explicacao das funcionalidades)" << std::endl; // <-- LINHA ADICIONADA
-        std::cout << "0. Sair" << std::endl;
-        std::cout << "======================================================" << std::endl;
-        std::cout << "Escolha o modo: ";
-
-        escolha = lerNumero();
-
-        // VERSÃO NOVA
-        switch (escolha) {
-            case 1:
-                modoSimulador(core);
-                break;
-            case 2:
-                executarInstrucaoDemo(core);
-                break;
-            case 3:
-                mostrarAjuda();
-                break;
-            case 0:
-                std::cout << "Saindo..." << std::endl;
-                break;
-            default:
-                std::cout << "[ERRO] Opcao invalida." << std::endl;
-                break;
-        }
-    }
-
-    return 0;
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    LauncherWindow w; // <--- Alterado (Inicia o Launcher)
+    w.show();
+    return a.exec();
 }
-
-/*
-*int main(int argc, char *argv[])
-*{
-*   QApplication app(argc, argv);
-*
-*   MainWindow w;
-*
-*   w.show();
-*
-*   return app.exec();
-}
- */
