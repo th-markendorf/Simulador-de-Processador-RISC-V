@@ -1,0 +1,28 @@
+#ifndef SIMULADOR_DE_PROCESSADOR_RISC_V_TIPOSPIPELINE_H
+#define SIMULADOR_DE_PROCESSADOR_RISC_V_TIPOSPIPELINE_H
+
+// Enum para todas as operações da ULA
+enum OperacoesULA {
+    ULA_NOP,
+    ULA_SOMA, // Para ADDI, LW, SW, ADD
+    ULA_SUB,
+    ULA_XOR,
+    ULA_OR,
+    ULA_AND,
+    ULA_SLL,
+    ULA_SRL,
+    ULA_SRA,
+    ULA_SLT,
+    ULA_SLTU,
+    ULA_MUL,
+    ULA_MULH,
+    ULA_MULHSU,
+    ULA_MULHU,
+    ULA_DIV,
+    ULA_DIVU,
+    ULA_REM,
+    ULA_REMU,
+    ULA_LUI
+};
+
+#endif //SIMULADOR_DE_PROCESSADOR_RISC_V_TIPOSPIPELINE_H

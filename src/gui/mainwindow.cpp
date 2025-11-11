@@ -19,10 +19,10 @@ static const std::array<QString, 32> abiNames = {
 };
 
 // O construtor cria a janela e inicializa seu Core
-MainWindow::MainWindow(Core* core, QWidget *parent)
+MainWindow::MainWindow(Core *core, QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , m_core(core) // Armazena o ponteiro recebido
+      , ui(new Ui::MainWindow)
+      , m_core(core) // Armazena o ponteiro recebido
 {
     ui->setupUi(this);
 
@@ -58,7 +58,7 @@ MainWindow::MainWindow(Core* core, QWidget *parent)
     // Configura os cabeçalhos das colunas
     QStringList memHeaders;
     memHeaders << "Endereço";
-    for(int i = 0; i < 16; ++i) {
+    for (int i = 0; i < 16; ++i) {
         memHeaders << QString("+%1").arg(i, 2, 16, QChar('0')).toUpper();
     }
     memHeaders << "ASCII";
@@ -78,16 +78,14 @@ MainWindow::MainWindow(Core* core, QWidget *parent)
     ui->stepButton->setEnabled(false);
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete ui;
 }
 
 /**
  * @brief Opção 1 (Carregar Programa)
  */
-void MainWindow::on_loadButton_clicked()
-{
+void MainWindow::on_loadButton_clicked() {
     QString filePath = QFileDialog::getOpenFileName(
         this,
         "Abrir Programa Risc-V", // Título da Janela
@@ -108,8 +106,7 @@ void MainWindow::on_loadButton_clicked()
 /**
  * @brief  Opção 5 (Resetar Core)
  */
-void MainWindow::on_resetButton_clicked()
-{
+void MainWindow::on_resetButton_clicked() {
     m_runTimer->stop();
     ui->runButton->setText("Run");
     m_core->reset(); // Chama o reset do core
@@ -121,13 +118,12 @@ void MainWindow::on_resetButton_clicked()
 /**
  * @brief Opção 3 (Executar Step)
  */
-void MainWindow::on_stepButton_clicked()
-{
+void MainWindow::on_stepButton_clicked() {
     // Chama a função step() do SEU Core
-    std::string log_msg = m_core->step();
+    m_core->tick_clock(); // A nova função!
 
-    // Coloca o log retornado na caixa de texto 'logView'
-    ui->logView->append(QString::fromStdString(log_msg));
+    // tick_clock() é void, não retorna log.
+    ui->logView->append("Clock tick executado.");
 
     // Atualiza os registradores na tela (substitui o imprimir_register())
     updateUI();
@@ -147,8 +143,7 @@ void MainWindow::on_stepButton_clicked()
  * Esta é a principal diferença: em vez de chamar core.run() (que trava),
  * nós iniciamos um timer que clica no "Step" muito rápido.
  */
-void MainWindow::on_runButton_clicked()
-{
+void MainWindow::on_runButton_clicked() {
     if (m_runTimer->isActive()) {
         m_runTimer->stop();
         ui->runButton->setText("Run");
@@ -162,8 +157,7 @@ void MainWindow::on_runButton_clicked()
  * @brief Esta função é chamada pelo timer (a cada 50ms)
  * quando o "Run" está ativo.
  */
-void MainWindow::on_run_timer_timeout()
-{
+void MainWindow::on_run_timer_timeout() {
     on_stepButton_clicked();
 }
 
@@ -171,8 +165,7 @@ void MainWindow::on_run_timer_timeout()
  * @brief Opção 4 (Exibir Registradores)
  * Esta função é chamada automaticamente após cada ação.
  */
-void MainWindow::updateUI()
-{
+void MainWindow::updateUI() {
     std::array<uint32_t, 32> regs = m_core->get_registradores();
     uint32_t pc = m_core->get_program_counter();
 
@@ -200,8 +193,7 @@ void MainWindow::updateUI()
 /**
  * @brief Função helper que lê um arquivo .hex e o carrega no Core.
  */
-void MainWindow::loadProgramFromFile(const QString &filePath)
-{
+void MainWindow::loadProgramFromFile(const QString &filePath) {
     std::vector<uint32_t> programa;
     QFile file(filePath);
 
@@ -231,7 +223,8 @@ void MainWindow::loadProgramFromFile(const QString &filePath)
         if (!ok) {
             // Se falhar, avisa o usuário
             QMessageBox::critical(this, "Erro de Leitura",
-                                  QString("Erro ao ler o arquivo na linha %1: \"%2\" nao e um numero hexadecimal valido.")
+                                  QString(
+                                      "Erro ao ler o arquivo na linha %1: \"%2\" nao e um numero hexadecimal valido.")
                                   .arg(lineNumber).arg(line));
             file.close();
             return;
@@ -258,12 +251,11 @@ void MainWindow::loadProgramFromFile(const QString &filePath)
 
     ui->logView->clear(); // Limpa o log
     ui->logView->append(QString("Programa carregado de %1. Total de %2 instrucoes (+1 nula).")
-                        .arg(filePath).arg(programa.size() - 1));
+        .arg(filePath).arg(programa.size() - 1));
     updateUI(); // Atualiza a exibição dos registradores
 }
 
-void MainWindow::on_memInspectButton_clicked()
-{
+void MainWindow::on_memInspectButton_clicked() {
     // 1. Obter o endereço do QLineEdit (memAddressInput)
     QString addressStr = ui->memAddressInput->text();
     bool ok;
@@ -297,7 +289,8 @@ void MainWindow::on_memInspectButton_clicked()
             ui->memoryTable->setItem(row, col + 1, new QTableWidgetItem(hexByte));
 
             // Constrói a string ASCII
-            if (byte >= 32 && byte <= 126) { // Caractere imprimível
+            if (byte >= 32 && byte <= 126) {
+                // Caractere imprimível
                 asciiString += static_cast<char>(byte);
             } else {
                 asciiString += "."; // caractere não imprimível
@@ -310,5 +303,7 @@ void MainWindow::on_memInspectButton_clicked()
 
     // 4. Ajustar colunas (apenas na primeira vez, opcional)
     ui->memoryTable->resizeColumnsToContents();
-    ui->logView->append(QString("[INFO] Visualização da memória atualizada a partir de %1").arg(QString("0x%1").arg(startAddress, 8, 16, QChar('0'))));
+    ui->logView->append(
+        QString("[INFO] Visualização da memória atualizada a partir de %1").arg(
+            QString("0x%1").arg(startAddress, 8, 16, QChar('0'))));
 }

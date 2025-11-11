@@ -123,9 +123,8 @@ void DemoWindow::on_setRegButtonRs2_clicked() {
     updateRegistersView(ui->registersTableAntes, highlightReg2);
 }
 
-// Slot do botão "Executar Instrução"
 void DemoWindow::on_execButton_clicked() {
-    // 1. Pega os operandos da UI
+    // 1. Pega os operandos da UI (Sem alterações)
     uint32_t rd = ui->spinRd->value();
     uint32_t rs1 = ui->spinRs1->value();
     uint32_t rs2 = ui->spinRs2->value();
@@ -135,9 +134,9 @@ void DemoWindow::on_execButton_clicked() {
     uint32_t instrucao_codificada = 0;
     const uint32_t OPCODE_R = 0x33;
     const uint32_t OPCODE_I = 0x13;
-    const uint32_t FUNCT7_M = 0x01; // Funct7 para a Extensão "M"
+    const uint32_t FUNCT7_M = 0x01;
 
-    // 2. Monta a instrução
+    // 2. Monta a instrução (Sem alterações)
     if (instrucao == "ADD") {
         instrucao_codificada = montar_tipo_R(0x00, rs2, rs1, 0x0, rd, OPCODE_R);
     } else if (instrucao == "SUB") {
@@ -156,7 +155,6 @@ void DemoWindow::on_execButton_clicked() {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x6, rd, OPCODE_R);
     } else if (instrucao == "REMU") {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x7, rd, OPCODE_R);
-        // --- FIM DOS NOVOS BLOCOS ---
     } else if (instrucao == "ADDI") {
         instrucao_codificada = montar_tipo_I(imm, rs1, 0x0, rd, OPCODE_I);
     } else if (instrucao == "ANDI") {
@@ -169,13 +167,12 @@ void DemoWindow::on_execButton_clicked() {
     std::vector<uint32_t> programa_demo = {instrucao_codificada, 0x00000000};
     m_core->load_program(programa_demo);
 
-    std::string log = m_core->step();
-    ui->logView->append(QString::fromStdString(log));
+    for (int i = 0; i < 5; ++i) {
+        m_core->tick_clock();
+    }
 
-    // 4. Mostra o resultado
     updateRegistersView(ui->registersTableDepois, rd);
 }
-
 /**
  * @brief Função para exibir registradores em uma tabela, com destaque opcional.
  */

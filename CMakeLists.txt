@@ -18,14 +18,16 @@ set(PROJECT_SOURCES
 
 set(PROJECT_HEADERS
         src/core/Core.h
+        src/core/RegistradoresPipeline.h
         src/cache/Cache.h
         src/gui/mainwindow.h
 )
 
 set(PROJECT_UI_FILES
         src/gui/mainwindow.ui
-        src/core/Instruction.cpp
         src/core/Instruction.h
+        src/core/RegistradoresPipeline.h
+        src/core/TiposPipeline.h
 )
 
 add_executable(Simulador-de-Processador-RISC-V
