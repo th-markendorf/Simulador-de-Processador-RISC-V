@@ -36,6 +36,20 @@ public:
         return cache.get();
     }
 
+    // Estrutura para transportar o estado completo do pipeline para a GUI
+    struct PipelineState {
+        IF_ID_Register if_id;
+        ID_EX_Register id_ex;
+        EX_MEM_Register ex_mem;
+        MEM_WB_Register mem_wb;
+        uint32_t pc_atual; // PC no estágio IF
+    };
+
+    // Retorna uma cópia do estado atual
+    PipelineState get_pipeline_state() const {
+        return {reg_if_id, reg_id_ex, reg_ex_mem, reg_mem_wb, contador_programa};
+    }
+
 private:
     // --- Membros Principais ---
     uint32_t registradores[32];

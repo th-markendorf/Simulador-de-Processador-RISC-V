@@ -41,6 +41,7 @@ private:
     void on_run_timer_timeout();
     void loadProgramFromFile(const QString& filePath);
     void updateCacheUI();
+    void updatePipelineUI();
 
     Core* m_core;
     QTimer *m_runTimer;

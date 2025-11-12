@@ -201,6 +201,7 @@ void MainWindow::updateUI() {
     ui->registersTable->setItem(32, 3, new QTableWidgetItem(decPC));
 
     updateCacheUI();
+    updatePipelineUI();
 }
 
 /**
@@ -359,5 +360,70 @@ void MainWindow::updateCacheUI() {
             dadosHex += QString("%1 ").arg(b, 2, 16, QChar('0')).toUpper();
         }
         ui->cacheTable->item(i, 3)->setText(dadosHex.trimmed());
+    }
+}
+
+QString ulaOpToString(int op) {
+    switch(op) {
+        case 1: return "SOMA/ADD";
+        case 2: return "SUB";
+        case 19: return "LUI";
+        case 0: return "NOP";
+        default: return QString::number(op);
+    }
+}
+
+void MainWindow::updatePipelineUI() {
+    auto state = m_core->get_pipeline_state();
+
+    // --- ESTÁGIO IF ---
+    ui->lbl_if_pc->setText(QString("0x%1").arg(state.pc_atual, 8, 16, QChar('0')));
+    // Mostra a instrução que acabou de ser buscada (está no buffer IF/ID)
+    ui->lbl_if_inst->setText(QString("0x%1").arg(state.if_id.instrucao, 8, 16, QChar('0')));
+
+    // --- ESTÁGIO ID ---
+    if (state.id_ex.valido) {
+        ui->lbl_id_inst->setText(QString("Opcode: 0x%1").arg(state.id_ex.opcode, 0, 16));
+        ui->lbl_id_rs1->setText(QString("%1").arg(state.id_ex.valor_rs1));
+        ui->lbl_id_rs2->setText(QString("%1").arg(state.id_ex.valor_rs2));
+    } else {
+        ui->lbl_id_inst->setText("BOLHA (Stall)");
+        ui->lbl_id_rs1->setText("-");
+        ui->lbl_id_rs2->setText("-");
+    }
+
+    // --- ESTÁGIO EX ---
+    if (state.ex_mem.valido) {
+        // Precisamos pegar a operação do estágio anterior (ID/EX) que gerou isso,
+        // mas simplificando, mostramos o resultado atual
+        ui->lbl_ex_op->setText("Executando");
+        ui->lbl_ex_res->setText(QString::number(state.ex_mem.resultado_ula));
+    } else {
+        ui->lbl_ex_op->setText("BOLHA");
+        ui->lbl_ex_res->setText("-");
+    }
+
+    // --- ESTÁGIO MEM ---
+    if (state.mem_wb.valido) { // O registrador MEM/WB contém o resultado do estágio MEM
+        if (state.ex_mem.ler_memoria) { // Note: usamos sinais do EX/MEM para saber o que aconteceu
+            ui->lbl_mem_action->setText("Leitura");
+        } else if (state.ex_mem.escrever_memoria) {
+            ui->lbl_mem_action->setText("Escrita");
+        } else {
+            ui->lbl_mem_action->setText("Ocioso");
+        }
+    } else {
+         ui->lbl_mem_action->setText("BOLHA");
+    }
+
+    // --- ESTÁGIO WB ---
+    if (state.mem_wb.valido && state.mem_wb.escrever_registrador) {
+        ui->lbl_wb_dest->setText(QString("x%1").arg(state.mem_wb.rd_destino));
+
+        int32_t valor_final = state.mem_wb.mem_para_reg ? state.mem_wb.dado_lido_da_memoria : state.mem_wb.resultado_ula;
+        ui->lbl_wb_val->setText(QString::number(valor_final));
+    } else {
+        ui->lbl_wb_dest->setText("-");
+        ui->lbl_wb_val->setText("-");
     }
 }
