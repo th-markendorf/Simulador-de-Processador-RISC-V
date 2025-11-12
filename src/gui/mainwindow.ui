@@ -48,14 +48,14 @@
    <widget class="QTabWidget" name="mainTabWidget">
     <property name="geometry">
      <rect>
-      <x>8</x>
+      <x>-2</x>
       <y>10</y>
-      <width>811</width>
-      <height>381</height>
+      <width>821</width>
+      <height>391</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -203,6 +203,21 @@
         <y>70</y>
         <width>731</width>
         <height>271</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_3">
+     <attribute name="title">
+      <string>Cache</string>
+     </attribute>
+     <widget class="QTableWidget" name="cacheTable">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>791</width>
+        <height>351</height>
        </rect>
       </property>
      </widget>

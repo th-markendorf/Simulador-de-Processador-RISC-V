@@ -32,6 +32,10 @@ public:
 
     uint8_t get_byte_memoria(uint32_t endereco) const;
 
+    const Cache* get_cache_view() const {
+        return cache.get();
+    }
+
 private:
     // --- Membros Principais ---
     uint32_t registradores[32];

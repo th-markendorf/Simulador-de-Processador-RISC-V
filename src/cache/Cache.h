@@ -13,20 +13,19 @@ public:
     uint32_t lerDados(uint32_t endereco);
     void escreverDados(uint32_t endereco, uint32_t valor);
 
-private:
     struct LinhaCache
     {
-        // Indica se a linha contém dados válidos ou se é lixo
         bool valida = false;
-        // ID para identificar o bloco de memória armazenado
         uint32_t tag = 0;
         std::vector<uint8_t> dados;
-
-        explicit LinhaCache(size_t tamanho_bloco) : dados(tamanho_bloco, 0)
-        {
-        }
+        explicit LinhaCache(size_t tamanho_bloco) : dados(tamanho_bloco, 0){ }
     };
 
+    const std::vector<LinhaCache>& get_linhas() const {
+        return linhas;
+    }
+
+private:
     uint32_t tamanho_cache;
     uint32_t tamanho_bloco;
     uint32_t qtd_linhas;

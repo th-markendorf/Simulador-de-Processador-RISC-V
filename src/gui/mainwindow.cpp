@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "../cache/Cache.h"
 #include <sstream>
 #include <iomanip>
 #include <QFileDialog>
@@ -20,11 +21,21 @@ static const std::array<QString, 32> abiNames = {
 
 // O construtor cria a janela e inicializa seu Core
 MainWindow::MainWindow(Core *core, QWidget *parent)
-    : QMainWindow(parent)
-      , ui(new Ui::MainWindow)
-      , m_core(core) // Armazena o ponteiro recebido
+    : QMainWindow(parent), ui(new Ui::MainWindow), m_core(core)
 {
     ui->setupUi(this);
+
+    ui->cacheTable->setColumnCount(4);
+    ui->cacheTable->setHorizontalHeaderLabels(QStringList() << "Indice" << "Validade" << "Tag" << "Dados (Hex)");
+
+    // Ajustes visuais
+    ui->cacheTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->cacheTable->verticalHeader()->setVisible(false); // Esconde contagem de linhas lateral
+    // Ajusta largura das colunas
+    ui->cacheTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->cacheTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->cacheTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->cacheTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
 
     m_runTimer = new QTimer(this);
     connect(m_runTimer, &QTimer::timeout, this, &MainWindow::on_run_timer_timeout);
@@ -188,6 +199,8 @@ void MainWindow::updateUI() {
     QString decPC = QString::number(pc);
     ui->registersTable->setItem(32, 2, new QTableWidgetItem(hexPC));
     ui->registersTable->setItem(32, 3, new QTableWidgetItem(decPC));
+
+    updateCacheUI();
 }
 
 /**
@@ -306,4 +319,45 @@ void MainWindow::on_memInspectButton_clicked() {
     ui->logView->append(
         QString("[INFO] Visualização da memória atualizada a partir de %1").arg(
             QString("0x%1").arg(startAddress, 8, 16, QChar('0'))));
+}
+
+void MainWindow::updateCacheUI() {
+    // 1. Pega os dados brutos do backend
+    const Cache* cache = m_core->get_cache_view();
+    const auto& linhas = cache->get_linhas();
+
+    // 2. Garante que a tabela visual tem o mesmo número de linhas do cache real
+    if (ui->cacheTable->rowCount() != linhas.size()) {
+        ui->cacheTable->setRowCount(linhas.size());
+    }
+
+    // 3. Preenche linha por linha
+    for (size_t i = 0; i < linhas.size(); ++i) {
+        const auto& linha = linhas[i];
+
+        // --- Coluna 0: Índice ---
+        if (!ui->cacheTable->item(i, 0)) ui->cacheTable->setItem(i, 0, new QTableWidgetItem());
+        ui->cacheTable->item(i, 0)->setText(QString::number(i));
+
+        // --- Coluna 1: Validade ---
+        if (!ui->cacheTable->item(i, 1)) ui->cacheTable->setItem(i, 1, new QTableWidgetItem());
+        ui->cacheTable->item(i, 1)->setText(linha.valida ? "Válido" : "Inválido");
+
+        // Define o Fundo: Verde Claro (Válido) ou Cinza Claro (Inválido)
+        QColor corFundo = linha.valida ? QColor(200, 255, 200) : QColor(240, 240, 240);
+        ui->cacheTable->item(i, 1)->setBackground(corFundo);
+        ui->cacheTable->item(i, 1)->setForeground(Qt::black);
+
+        // --- Coluna 2: Tag ---
+        if (!ui->cacheTable->item(i, 2)) ui->cacheTable->setItem(i, 2, new QTableWidgetItem());
+        ui->cacheTable->item(i, 2)->setText(QString("0x%1").arg(linha.tag, 0, 16));
+
+        // --- Coluna 3: Dados ---
+        if (!ui->cacheTable->item(i, 3)) ui->cacheTable->setItem(i, 3, new QTableWidgetItem());
+        QString dadosHex;
+        for (uint8_t b : linha.dados) {
+            dadosHex += QString("%1 ").arg(b, 2, 16, QChar('0')).toUpper();
+        }
+        ui->cacheTable->item(i, 3)->setText(dadosHex.trimmed());
+    }
 }

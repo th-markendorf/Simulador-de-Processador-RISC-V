@@ -40,6 +40,7 @@ private:
     void updateUI(); // Função helper
     void on_run_timer_timeout();
     void loadProgramFromFile(const QString& filePath);
+    void updateCacheUI();
 
     Core* m_core;
     QTimer *m_runTimer;
