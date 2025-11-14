@@ -58,6 +58,7 @@ private:
     std::unique_ptr<Cache> cache;
     bool m_do_flush = false;
     uint32_t m_new_pc_target = 0;
+    bool m_parar_execucao = false; // Sinaliza que encontramos o fim do programa
 
     // --- Membros do Pipeline ---
     bool m_pipeline_stall = false; // Sinal de "freio" para o IF e ID

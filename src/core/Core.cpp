@@ -25,10 +25,15 @@ void Core::reset() {
     reg_ex_mem = {};
     reg_mem_wb = {};
     m_pipeline_stall = false;
+
+    m_parar_execucao = false;
 }
 
 bool Core::is_finished() const {
-    return contador_programa >= memoria.size();
+    // Terminou se a flag de parada está ativa E não há mais instruções válidas no pipeline
+    bool pipeline_vazio = !reg_if_id.valido && !reg_id_ex.valido && !reg_ex_mem.valido && !reg_mem_wb.valido;
+
+    return (m_parar_execucao && pipeline_vazio) || (contador_programa >= memoria.size());
 }
 
 void Core::load_program(const std::vector<uint32_t> &programa) {
@@ -546,6 +551,18 @@ void Core::pipeline_estagio_IF() {
     // 3. Busca Normal
     // Busca a instrução do PC atual via cache.
     uint32_t instrucao = cache->lerDados(contador_programa);
+
+    if (instrucao == 0) {
+        // Encontramos o fim do programa (instrução nula)
+        m_parar_execucao = true;
+
+        // Injeta uma bolha para não processar lixo
+        reg_if_id = {};
+        reg_if_id.valido = false;
+
+        // NÃO incrementamos o PC aqui, para ele parar onde está.
+        return;
+    }
 
     // Passa a instrução e o PC para o próximo estágio.
     reg_if_id.instrucao = instrucao;
