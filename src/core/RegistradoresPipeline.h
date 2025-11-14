@@ -14,6 +14,8 @@ struct ID_EX_Register {
     // Sinais de Controle (decididos no estágio ID)
     uint32_t opcode; // <-- ADICIONADO: O opcode da instrução
     bool usar_ula = false;
+    uint32_t rs1_index; // Índice do registrador fonte 1 (0-31)
+    uint32_t rs2_index; // Índice do registrador fonte 2 (0-31)
     bool ler_memoria = false;
     bool escrever_memoria = false;
     bool escrever_registrador = false;

@@ -159,15 +159,41 @@ void Core::pipeline_estagio_EX() {
     reg_ex_mem.valor_para_escrever_memoria = reg_id_ex.valor_rs2; // Para SW
     reg_ex_mem.mem_para_reg = reg_id_ex.mem_para_reg; // Para WB
 
+    // Valor base: Pegamos do banco de registradores "agora".
+    // Isso resolve automaticamente o Hazard de distância 2 (WB), pois o estágio WB
+    // roda antes do EX no seu tick_clock(), então registradores[] já está atualizado.
+    int32_t rs1_atual = registradores[reg_id_ex.rs1_index];
+    int32_t rs2_atual = registradores[reg_id_ex.rs2_index];
+
+    // Verifica Forwarding do estágio MEM (Hazard de distância 1)
+    // A instrução que estava em EX no ciclo passado agora está em reg_mem_wb (pois MEM já rodou)
+    bool forward_rs1_mem = (reg_mem_wb.valido && reg_mem_wb.escrever_registrador && reg_mem_wb.rd_destino != 0 && reg_mem_wb.rd_destino == reg_id_ex.rs1_index);
+    bool forward_rs2_mem = (reg_mem_wb.valido && reg_mem_wb.escrever_registrador && reg_mem_wb.rd_destino != 0 && reg_mem_wb.rd_destino == reg_id_ex.rs2_index);
+
+    if (forward_rs1_mem) {
+        // Se a instrução anterior era um Load, o dado é 'dado_lido', senão é 'resultado_ula'
+        rs1_atual = reg_mem_wb.mem_para_reg ? reg_mem_wb.dado_lido_da_memoria : reg_mem_wb.resultado_ula;
+    }
+
+    if (forward_rs2_mem) {
+        rs2_atual = reg_mem_wb.mem_para_reg ? reg_mem_wb.dado_lido_da_memoria : reg_mem_wb.resultado_ula;
+    }
+
+    // Atualiza o valor para SW (Store Word) com o dado correto (forwarded)
+    reg_ex_mem.valor_para_escrever_memoria = rs2_atual;
+
     // --- Seleção de Operandos da ULA ---
-    int32_t operando1 = reg_id_ex.valor_rs1;
+    int32_t operando1 = rs1_atual;
     int32_t operando2;
 
-    // O operando2 é o imediato ou o valor de rs2
-    if (reg_id_ex.opcode == 0x13 || reg_id_ex.opcode == 0x03 || reg_id_ex.opcode == 0x23 || reg_id_ex.opcode == 0x37) {
+    // O operando2 é o imediato ou o valor de rs2 (atualizado)
+    // Lista de opcodes que usam Imediato (Tipo-I, Load, Store, LUI, JAL, JALR)
+    bool usa_imediato = (reg_id_ex.opcode == 0x13 || reg_id_ex.opcode == 0x03 || reg_id_ex.opcode == 0x23 || reg_id_ex.opcode == 0x37 || reg_id_ex.opcode == 0x6F);
+
+    if (usa_imediato) {
         operando2 = reg_id_ex.imediato;
     } else {
-        operando2 = reg_id_ex.valor_rs2;
+        operando2 = rs2_atual;
     }
 
     if (reg_id_ex.usar_ula) {
@@ -351,6 +377,9 @@ void Core::pipeline_estagio_ID() {
     reg_id_ex.valido = true;
     reg_id_ex.pc = reg_if_id.pc;
     reg_id_ex.opcode = inst.opcode(); // Salva o opcode (para o EX)
+
+    reg_id_ex.rs1_index = inst.rs1(); // Salva o índice (ex: x1)
+    reg_id_ex.rs2_index = inst.rs2(); // Salva o índice (ex: x2)
 
     // Lê os valores dos registradores fonte (rs1 e rs2)
     reg_id_ex.valor_rs1 = registradores[inst.rs1()];
