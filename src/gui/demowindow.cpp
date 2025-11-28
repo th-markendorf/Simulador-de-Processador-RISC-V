@@ -6,10 +6,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include <QTableWidget>
-#include <QHeaderView>
-#include <QBrush>
-
 static const std::array<QString, 32> abiNames = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
     "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
@@ -23,19 +19,20 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
                                                       m_core(core),
                                                       m_highlightBrush(QColor(80, 80, 80)) {
     ui->setupUi(this);
-    ui->label_9->setGeometry(250, 30, 130, 20);
-    ui->spinRegValor->setGeometry(250, 55, 120, 28); // Altura levemente reduzida
 
-    int btnWidth = 160;  // Largura menor (antes era 190)
-    int btnHeight = 28;  // Altura menor (antes era 35)
+    // CORREÇÃO DE LAYOUT
 
-    int col1_X = 410;
+    ui->label_9->setGeometry(240, 30, 130, 20);
+    ui->spinRegValor->setGeometry(240, 55, 120, 28);
+
+    int btnWidth = 160;
+    int btnHeight = 28;
+    int col1_X = 400;
     int col2_X = 580;
-
     int row1_Y = 30;
     int row2_Y = 65;
 
-    // Aplica as posições
+    // 3. Aplica as posições
     ui->setRegButtonRs1->setGeometry(col1_X, row1_Y, btnWidth, btnHeight);
     ui->setRegButtonRs2->setGeometry(col1_X, row2_Y, btnWidth, btnHeight);
     ui->resetRegsButton->setGeometry(col2_X, row1_Y, btnWidth, btnHeight);
@@ -44,13 +41,13 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
     ui->resetRegsButton->setText("Resetar Tudo");
 
     QString estiloCompacto = "font-size: 9pt; padding: 2px;";
-
     ui->setRegButtonRs1->setStyleSheet(estiloCompacto);
     ui->setRegButtonRs2->setStyleSheet(estiloCompacto);
     ui->resetRegsButton->setStyleSheet(estiloCompacto);
     ui->execButton->setStyleSheet(estiloCompacto);
 
-    // MENU DE AJUDA ---
+
+    // MENU DE AJUDA
     QMenu *menuAjuda = ui->menubar->addMenu("Ajuda");
     QAction *actionInstrucoes = new QAction("Explicação das Instruções", this);
 
@@ -65,10 +62,8 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
             "<li><b>SUB:</b> Subtração (<i>rd = rs1 - rs2</i>)</li>"
             "<li><b>MUL:</b> Multiplicação (<i>rd = rs1 * rs2</i>)</li>"
             "<li><b>MULH/MULHU:</b> Multiplicação (parte alta do resultado)</li>"
-            "<li><b>DIV:</b> Divisão Inteira com sinal</li>"
-            "<li><b>DIVU:</b> Divisão Inteira sem sinal (Unsigned)</li>"
-            "<li><b>REM:</b> Resto da Divisão com sinal</li>"
-            "<li><b>REMU:</b> Resto da Divisão sem sinal (Unsigned)</li>"
+            "<li><b>DIV/DIVU:</b> Divisão Inteira (com/sem sinal)</li>"
+            "<li><b>REM/REMU:</b> Resto da Divisão (com/sem sinal)</li>"
             "</ul>"
             "<hr>"
             "<h4>Instruções Tipo-I (Usa RS1 e Imediato)</h4>"
@@ -76,6 +71,12 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
             "<li><b>ADDI:</b> Soma com Constante (<i>rd = rs1 + imediato</i>)</li>"
             "<li><b>ANDI:</b> 'E' Lógico bit-a-bit (<i>rd = rs1 & imediato</i>)</li>"
             "<li><b>ORI:</b> 'OU' Lógico bit-a-bit (<i>rd = rs1 | imediato</i>)</li>"
+            "<li><b>JALR:</b> Pulo Indireto (<i>PC = rs1 + imediato</i>, salva PC+4 em rd)</li>"
+            "</ul>"
+            "<hr>"
+            "<h4>Instruções Tipo-U (Usa Apenas Imediato)</h4>"
+            "<ul>"
+            "<li><b>AUIPC:</b> Soma PC (<i>rd = PC + (imediato << 12)</i>)</li>"
             "</ul>";
 
         QMessageBox::about(this, "Instruções Suportadas", texto);
@@ -102,12 +103,9 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
         table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     }
 
+    // ADICIONANDO AS NOVAS INSTRUÇÕES AQUI
     ui->comboInstrucao->addItem("ADD", 0x33);
     ui->comboInstrucao->addItem("SUB", 0x33);
-    ui->comboInstrucao->addItem("ADDI", 0x13);
-    ui->comboInstrucao->addItem("ANDI", 0x13);
-    ui->comboInstrucao->addItem("ORI", 0x13);
-
     ui->comboInstrucao->addItem("MUL", 0x33);
     ui->comboInstrucao->addItem("MULH", 0x33);
     ui->comboInstrucao->addItem("MULHU", 0x33);
@@ -115,6 +113,14 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
     ui->comboInstrucao->addItem("DIVU", 0x33);
     ui->comboInstrucao->addItem("REM", 0x33);
     ui->comboInstrucao->addItem("REMU", 0x33);
+
+    ui->comboInstrucao->addItem("ADDI", 0x13);
+    ui->comboInstrucao->addItem("ANDI", 0x13);
+    ui->comboInstrucao->addItem("ORI", 0x13);
+
+    // Novas:
+    ui->comboInstrucao->addItem("JALR", 0x67);  // Tipo I
+    ui->comboInstrucao->addItem("AUIPC", 0x17); // Tipo U
 
     ui->spinRd->setRange(0, 31);
     ui->spinRs1->setRange(0, 31);
@@ -131,57 +137,60 @@ DemoWindow::~DemoWindow() {
     delete ui;
 }
 
-// Atualiza a UI baseado na instrução (ex: ADDI não usa rs2)
+// Atualiza a UI baseado na instrução (Habilita/Desabilita campos)
 void DemoWindow::on_comboInstrucao_currentIndexChanged(int index) {
     uint32_t opcode = ui->comboInstrucao->itemData(index).toUInt();
 
     if (opcode == 0x33) {
-        // 0x33 é o OPCODE_R (ADD, SUB, MUL, DIV, etc.)
-        // Tipo R: Habilita rs2, desabilita imediato
+        // Tipo R (ADD, SUB...): Usa RS1, RS2. Sem Imediato.
+        ui->spinRs1->setEnabled(true);
+        ui->setRegButtonRs1->setEnabled(true);
+
         ui->spinRs2->setEnabled(true);
-        ui->spinImm->setEnabled(false);
         ui->setRegButtonRs2->setEnabled(true);
-    } else {
-        // 0x13 é o OPCODE_I (ADDI, ANDI, etc.)
-        // Tipo I: Desabilita rs2, habilita imediato
+
+        ui->spinImm->setEnabled(false);
+
+    } else if (opcode == 0x17) {
+        // Tipo U (AUIPC): Usa Imediato. Sem RS1, Sem RS2.
+        ui->spinRs1->setEnabled(false); // AUIPC não lê registrador
+        ui->setRegButtonRs1->setEnabled(false);
+
         ui->spinRs2->setEnabled(false);
-        ui->spinImm->setEnabled(true);
         ui->setRegButtonRs2->setEnabled(false);
+
+        ui->spinImm->setEnabled(true);
+
+    } else {
+        // Tipo I (ADDI, JALR...): Usa RS1, Imediato. Sem RS2.
+        ui->spinRs1->setEnabled(true);
+        ui->setRegButtonRs1->setEnabled(true);
+
+        ui->spinRs2->setEnabled(false);
+        ui->setRegButtonRs2->setEnabled(false);
+
+        ui->spinImm->setEnabled(true);
     }
 }
 
-/**
- * @brief Slot do botão "Definir Valor em RS1"
- */
 void DemoWindow::on_setRegButtonRs1_clicked() {
     int32_t valor = ui->spinRegValor->value();
     int highlightReg1 = ui->spinRs1->value();
-
-    // Define o valor apenas em rs1
     m_core->set_register(highlightReg1, valor);
     ui->logView->append(QString("Valor %1 definido em x%2 (rs1).").arg(valor).arg(highlightReg1));
-
-    // Mostra o estado "Antes"
     updateRegistersView(ui->registersTableAntes, highlightReg1);
 }
 
-/**
- * @brief Slot do botão "Definir Valor em RS2"
- */
 void DemoWindow::on_setRegButtonRs2_clicked() {
     int32_t valor = ui->spinRegValor->value();
     int highlightReg2 = ui->spinRs2->value();
-
-    // Define o valor apenas em rs2
     m_core->set_register(highlightReg2, valor);
     ui->logView->append(QString("Valor %1 definido em x%2 (rs2).").arg(valor).arg(highlightReg2));
-
-    // Mostra o estado "Antes"
     updateRegistersView(ui->registersTableAntes, highlightReg2);
 }
 
 void DemoWindow::on_execButton_clicked() {
-    // 1. Pega os operandos da UI (Sem alterações)
+    // 1. Pega os operandos da UI
     uint32_t rd = ui->spinRd->value();
     uint32_t rs1 = ui->spinRs1->value();
     uint32_t rs2 = ui->spinRs2->value();
@@ -193,7 +202,7 @@ void DemoWindow::on_execButton_clicked() {
     const uint32_t OPCODE_I = 0x13;
     const uint32_t FUNCT7_M = 0x01;
 
-    // 2. Monta a instrução (Sem alterações)
+    // 2. Monta a instrução
     if (instrucao == "ADD") {
         instrucao_codificada = montar_tipo_R(0x00, rs2, rs1, 0x0, rd, OPCODE_R);
     } else if (instrucao == "SUB") {
@@ -212,48 +221,51 @@ void DemoWindow::on_execButton_clicked() {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x6, rd, OPCODE_R);
     } else if (instrucao == "REMU") {
         instrucao_codificada = montar_tipo_R(FUNCT7_M, rs2, rs1, 0x7, rd, OPCODE_R);
+
     } else if (instrucao == "ADDI") {
         instrucao_codificada = montar_tipo_I(imm, rs1, 0x0, rd, OPCODE_I);
     } else if (instrucao == "ANDI") {
         instrucao_codificada = montar_tipo_I(imm, rs1, 0x7, rd, OPCODE_I);
     } else if (instrucao == "ORI") {
         instrucao_codificada = montar_tipo_I(imm, rs1, 0x6, rd, OPCODE_I);
+
+    } else if (instrucao == "JALR") {
+        // JALR é Tipo-I, opcode 0x67, funct3 0x0
+        instrucao_codificada = montar_tipo_I(imm, rs1, 0x0, rd, 0x67);
+
+    } else if (instrucao == "AUIPC") {
+        // AUIPC é Tipo-U (Imediato << 12 | rd << 7 | opcode)
+        // O valor do spinImm (ex: 1) será deslocado para virar 4096 (0x1000)
+        uint32_t u_imm = static_cast<uint32_t>(imm) & 0xFFFFF; // 20 bits
+        instrucao_codificada = (u_imm << 12) | (rd << 7) | 0x17;
     }
 
-    // 3. Carrega e executa
-    std::vector<uint32_t> programa_demo = {instrucao_codificada, 0x00000000};
+    // Carrega e executa
+    // Adiciona NOPs depois para garantir que o pipeline flua
+    std::vector<uint32_t> programa_demo = {instrucao_codificada, 0x00000000, 0x00000000, 0x00000000, 0x00000000};
     m_core->load_program(programa_demo);
 
-    for (int i = 0; i < 5; ++i) {
+    // Executa ciclos suficientes para a instrução passar pelo WB
+    for (int i = 0; i < 6; ++i) {
         m_core->tick_clock();
     }
 
     updateRegistersView(ui->registersTableDepois, rd);
 }
-/**
- * @brief Função para exibir registradores em uma tabela, com destaque opcional.
- */
+
 void DemoWindow::updateRegistersView(QTableWidget *view, int highlightedRd) {
     std::array<uint32_t, 32> regs = m_core->get_registradores();
     uint32_t pc = m_core->get_program_counter();
-
-    // Reseta a cor de fundo padrão (necessário para limpar destaques antigos)
     const QBrush defaultBrush = view->palette().base();
 
-    // 1. Formata e preenche os registradores (x0-x31)
-    for (int i = 0; i < 32; ++i) { // O loop agora é 'i < 32'
+    for (int i = 0; i < 32; ++i) {
         uint32_t valor = regs[i];
-
-        // Coluna 2: Hexadecimal
         QString hexVal = QString("0x%1").arg(valor, 8, 16, QChar('0'));
         QTableWidgetItem* hexItem = new QTableWidgetItem(hexVal);
-
-        // Coluna 3: Decimal
         QString decVal = QString::number(static_cast<int32_t>(valor));
         QTableWidgetItem* decItem = new QTableWidgetItem(decVal);
 
-        // Define o destaque (ou reseta)
-        if (i == highlightedRd && i != 0) { // Destaca se for o 'rd' (e não for x0)
+        if (i == highlightedRd && i != 0) {
             hexItem->setBackground(m_highlightBrush);
             decItem->setBackground(m_highlightBrush);
         } else {
@@ -265,39 +277,25 @@ void DemoWindow::updateRegistersView(QTableWidget *view, int highlightedRd) {
         view->setItem(i, 3, decItem);
     }
 
-    // 2. Formata e preenche o PC (Linha 32)
     QString hexPC = QString("0x%1").arg(pc, 8, 16, QChar('0'));
     QString decPC = QString::number(pc);
-
     QTableWidgetItem* pcHexItem = new QTableWidgetItem(hexPC);
     QTableWidgetItem* pcDecItem = new QTableWidgetItem(decPC);
-    pcHexItem->setBackground(defaultBrush); // Garante que o PC não tenha destaque
+    pcHexItem->setBackground(defaultBrush);
     pcDecItem->setBackground(defaultBrush);
 
     view->setItem(32, 2, pcHexItem);
     view->setItem(32, 3, pcDecItem);
 }
 
-/**
- * @brief Slot para o botão "Resetar Registradores".
- * Reseta o core e limpa ambas as tabelas de visualização.
- */
 void DemoWindow::on_resetRegsButton_clicked()
 {
-    // 1. Chama o reset do Core
-    m_core->reset(); //
-
-    // 2. Atualiza a tabela "Antes" (agora zerada)
-    updateRegistersView(ui->registersTableAntes, -1); // -1 = sem destaque
-
-    // 3. Atualiza a tabela "Depois" (agora zerada)
+    m_core->reset();
+    updateRegistersView(ui->registersTableAntes, -1);
     updateRegistersView(ui->registersTableDepois, -1);
-
-    // 4. Adiciona uma mensagem ao log
     ui->logView->append("Registradores resetados para 0.");
 }
 
-// Funções helper portadas do seu main.cpp
 uint32_t DemoWindow::montar_tipo_R(uint32_t funct7, uint32_t rs2, uint32_t rs1, uint32_t funct3, uint32_t rd,
                                    uint32_t opcode) {
     return (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) | opcode;
