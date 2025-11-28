@@ -11,6 +11,8 @@
 #include <QHeaderView>
 #include <QTabWidget>
 #include <QLineEdit>
+#include <QAction>
+#include <QMenu>
 
 static const std::array<QString, 32> abiNames = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -19,19 +21,46 @@ static const std::array<QString, 32> abiNames = {
     "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
-// O construtor cria a janela e inicializa seu Core
 MainWindow::MainWindow(Core *core, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_core(core)
 {
     ui->setupUi(this);
 
+    // --- CÓDIGO DO MENU DE AJUDA (ATUALIZADO E EXPANDIDO) ---
+    QMenu *menuAjuda = ui->menubar->addMenu("Ajuda");
+    QAction *actionSobre = new QAction("Instruções / Sobre", this);
+
+    connect(actionSobre, &QAction::triggered, this, [this]() {
+        QString textoAjuda =
+            "<h3>Guia do Simulador RISC-V (Pipeline)</h3>"
+            "<p>Este software simula fielmente como um processador executa instruções ciclo a ciclo.</p>"
+            "<hr>"
+            "<h4>1. Fluxo de Trabalho:</h4>"
+            "<ul>"
+            "<li><b>Load (Carregar):</b> Lê um arquivo <i>.hex</i> e preenche a Memória Principal com as instruções (código de máquina).</li>"
+            "<li><b>Step (Passo):</b> A 'alma' do simulador. Avança um único ciclo de clock. Use para ver uma instrução passando de um estágio para outro.</li>"
+            "<li><b>Run (Executar):</b> Aciona um timer que clica em 'Step' automaticamente várias vezes por segundo.</li>"
+            "</ul>"
+            "<hr>"
+            "<h4>2. Entendendo as Abas:</h4>"
+            "<ul>"
+            "<li><b>Processador:</b> Mostra os 32 registradores de propósito geral (x0-x31). Observe como eles mudam de cor/valor no final da execução (Estágio WB).</li>"
+            "<li><b>Pipeline:</b> A visão interna. Você verá 5 instruções sendo processadas ao mesmo tempo (IF, ID, EX, MEM, WB). Observe como o processador resolve <i>Hazards</i> (conflitos) usando 'Bolhas' ou 'Forwarding'.</li>"
+            "<li><b>Cache:</b> Mostra o armazenamento temporário entre a CPU e a RAM. Veja os campos 'Tag' e 'Validade' para entender quando ocorre um <i>Hit</i> (dado encontrado) ou <i>Miss</i>.</li>"
+            "<li><b>Memória:</b> O mapa completo da RAM. Útil para verificar se suas instruções <i>Store</i> (SW) escreveram no endereço correto.</li>"
+            "</ul>";
+
+        QMessageBox::about(this, "Ajuda do Simulador", textoAjuda);
+    });
+
+    menuAjuda->addAction(actionSobre);
+    // ---------------------------------------------------------
+
     ui->cacheTable->setColumnCount(4);
     ui->cacheTable->setHorizontalHeaderLabels(QStringList() << "Indice" << "Validade" << "Tag" << "Dados (Hex)");
 
-    // Ajustes visuais
     ui->cacheTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->cacheTable->verticalHeader()->setVisible(false); // Esconde contagem de linhas lateral
-    // Ajusta largura das colunas
+    ui->cacheTable->verticalHeader()->setVisible(false);
     ui->cacheTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ui->cacheTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     ui->cacheTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
@@ -40,11 +69,10 @@ MainWindow::MainWindow(Core *core, QWidget *parent)
     m_runTimer = new QTimer(this);
     connect(m_runTimer, &QTimer::timeout, this, &MainWindow::on_run_timer_timeout);
 
-    // Deixa as caixas de texto como "somente leitura"
     ui->logView->setReadOnly(true);
     ui->registersTable->setColumnCount(4);
     ui->registersTable->setHorizontalHeaderLabels(QStringList() << "Reg" << "ABI" << "Hexadecimal" << "Decimal");
-    ui->registersTable->setRowCount(33); // x0-x31 + pc
+    ui->registersTable->setRowCount(33);
 
     for (int i = 0; i < 32; ++i) {
         ui->registersTable->setItem(i, 0, new QTableWidgetItem(QString("x%1").arg(i)));
@@ -54,19 +82,14 @@ MainWindow::MainWindow(Core *core, QWidget *parent)
     ui->registersTable->setItem(32, 1, new QTableWidgetItem("-"));
 
     ui->registersTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
     ui->registersTable->setFixedWidth(435);
-
     ui->registersTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-
     ui->registersTable->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 
-    // Configura a tabela de memória (16 bytes por linha)
-    const int memCols = 17; // 1 Endereço + 16 Bytes
-    ui->memoryTable->setColumnCount(memCols + 1); // +1 para a coluna ASCII
-    ui->memoryTable->setRowCount(16); // Vamos mostrar 16 linhas (16 * 16 = 256 bytes)
+    const int memCols = 17;
+    ui->memoryTable->setColumnCount(memCols + 1);
+    ui->memoryTable->setRowCount(16);
 
-    // Configura os cabeçalhos das colunas
     QStringList memHeaders;
     memHeaders << "Endereço";
     for (int i = 0; i < 16; ++i) {
@@ -75,16 +98,13 @@ MainWindow::MainWindow(Core *core, QWidget *parent)
     memHeaders << "ASCII";
     ui->memoryTable->setHorizontalHeaderLabels(memHeaders);
 
-    // Trava a edição
     ui->memoryTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    // Ajusta o tamanho das colunas
     ui->memoryTable->resizeColumnsToContents();
 
-    m_core->reset(); // Garante que o core esteja zerado
+    m_core->reset();
     ui->logView->append("Simulador iniciado. Use 'Load' para carregar um programa.");
-    updateUI(); // Atualiza a exibição (registradores zerados)
+    updateUI();
 
-    // Desativa os botões de execução até que um programa seja carregado
     ui->runButton->setEnabled(false);
     ui->stepButton->setEnabled(false);
 }

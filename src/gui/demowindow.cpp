@@ -1,5 +1,8 @@
 #include "demowindow.h"
 #include "ui_demowindow.h"
+#include <QMessageBox>
+#include <QMenu>
+#include <QAction>
 #include <sstream>
 #include <iomanip>
 
@@ -17,18 +20,51 @@ static const std::array<QString, 32> abiNames = {
 // Construtor
 DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
                                                       ui(new Ui::DemoWindow),
-                                                      m_core(core), // Armazena o ponteiro do Core
+                                                      m_core(core),
                                                       m_highlightBrush(QColor(80, 80, 80)) {
     ui->setupUi(this);
+
+    // --- CÓDIGO DO MENU DE AJUDA (DEMO) ---
+    QMenu *menuAjuda = ui->menubar->addMenu("Ajuda");
+    QAction *actionInstrucoes = new QAction("Explicação das Instruções", this);
+
+    connect(actionInstrucoes, &QAction::triggered, this, [this]() {
+        QString texto =
+            "<h3>Guia de Instruções - Modo Demo</h3>"
+            "<p>Neste modo, você testa a execução isolada na ULA (Unidade Lógica e Aritmética).</p>"
+            "<hr>"
+            "<h4>Instruções Tipo-R (Usa RS1 e RS2)</h4>"
+            "<ul>"
+            "<li><b>ADD:</b> Soma (<i>rd = rs1 + rs2</i>)</li>"
+            "<li><b>SUB:</b> Subtração (<i>rd = rs1 - rs2</i>)</li>"
+            "<li><b>MUL:</b> Multiplicação (<i>rd = rs1 * rs2</i>)</li>"
+            "<li><b>MULH/MULHU:</b> Multiplicação (parte alta do resultado)</li>"
+            "<li><b>DIV:</b> Divisão Inteira com sinal</li>"
+            "<li><b>DIVU:</b> Divisão Inteira sem sinal (Unsigned)</li>"
+            "<li><b>REM:</b> Resto da Divisão com sinal</li>"
+            "<li><b>REMU:</b> Resto da Divisão sem sinal (Unsigned)</li>"
+            "</ul>"
+            "<hr>"
+            "<h4>Instruções Tipo-I (Usa RS1 e Imediato)</h4>"
+            "<ul>"
+            "<li><b>ADDI:</b> Soma com Constante (<i>rd = rs1 + imediato</i>)</li>"
+            "<li><b>ANDI:</b> 'E' Lógico bit-a-bit (<i>rd = rs1 & imediato</i>)</li>"
+            "<li><b>ORI:</b> 'OU' Lógico bit-a-bit (<i>rd = rs1 | imediato</i>)</li>"
+            "</ul>";
+
+        QMessageBox::about(this, "Instruções Suportadas", texto);
+    });
+
+    menuAjuda->addAction(actionInstrucoes);
+    // --------------------------------------
+
     ui->logView->setReadOnly(true);
 
-    // Configura AMBAS as tabelas
     for (QTableWidget *table: {ui->registersTableAntes, ui->registersTableDepois}) {
         table->setColumnCount(4);
         table->setHorizontalHeaderLabels(QStringList() << "Reg" << "ABI" << "Hex" << "Dec");
-        table->setRowCount(33); // x0-x31 + pc
+        table->setRowCount(33);
 
-        // Adiciona os nomes dos registradores
         for (int i = 0; i < 32; ++i) {
             table->setItem(i, 0, new QTableWidgetItem(QString("x%1").arg(i)));
             table->setItem(i, 1, new QTableWidgetItem(abiNames[i]));
@@ -36,13 +72,11 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
         table->setItem(32, 0, new QTableWidgetItem("pc"));
         table->setItem(32, 1, new QTableWidgetItem("-"));
 
-        // Trava a edição e o tamanho
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
         table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     }
 
-    // Preenche o ComboBox com as instruções
     ui->comboInstrucao->addItem("ADD", 0x33);
     ui->comboInstrucao->addItem("SUB", 0x33);
     ui->comboInstrucao->addItem("ADDI", 0x13);
@@ -57,16 +91,14 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
     ui->comboInstrucao->addItem("REM", 0x33);
     ui->comboInstrucao->addItem("REMU", 0x33);
 
-    // Configura os limites (substitui lerRegistrador/lerImediato)
     ui->spinRd->setRange(0, 31);
     ui->spinRs1->setRange(0, 31);
     ui->spinRs2->setRange(0, 31);
     ui->spinImm->setRange(-2048, 2047);
 
-    // Inicia a UI
     on_comboInstrucao_currentIndexChanged(0);
     m_core->reset();
-    updateRegistersView(ui->registersTableAntes, -1); // -1 = sem destaque
+    updateRegistersView(ui->registersTableAntes, -1);
     updateRegistersView(ui->registersTableDepois, -1);
 }
 
