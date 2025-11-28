@@ -189,11 +189,16 @@ void Core::pipeline_estagio_EX() {
 
     // --- Seleção de Operandos da ULA ---
     int32_t operando1 = rs1_atual;
+    if (reg_id_ex.eh_auipc) {
+        operando1 = reg_id_ex.pc;
+    }
     int32_t operando2;
 
     // O operando2 é o imediato ou o valor de rs2 (atualizado)
     // Lista de opcodes que usam Imediato (Tipo-I, Load, Store, LUI, JAL, JALR)
-    bool usa_imediato = (reg_id_ex.opcode == 0x13 || reg_id_ex.opcode == 0x03 || reg_id_ex.opcode == 0x23 || reg_id_ex.opcode == 0x37 || reg_id_ex.opcode == 0x6F);
+    bool usa_imediato = (reg_id_ex.opcode == 0x13 || reg_id_ex.opcode == 0x03 ||
+                         reg_id_ex.opcode == 0x23 || reg_id_ex.opcode == 0x37 ||
+                         reg_id_ex.opcode == 0x6F || reg_id_ex.opcode == 0x17);
 
     if (usa_imediato) {
         operando2 = reg_id_ex.imediato;
@@ -512,6 +517,24 @@ void Core::pipeline_estagio_ID() {
             reg_id_ex.rd_destino = inst.rd();
             reg_id_ex.imediato = inst.imediato_tipo_U();
             reg_id_ex.operacao_ula = ULA_LUI;
+            break;
+
+        case 0x17: // --- AUIPC (Novo) ---
+            reg_id_ex.usar_ula = true;
+            reg_id_ex.escrever_registrador = true;
+            reg_id_ex.rd_destino = inst.rd();
+
+            // Tipo-U: O imediato já vem deslocado 12 bits à esquerda
+            reg_id_ex.imediato = inst.imediato_tipo_U();
+
+            // Sinaliza que é AUIPC (para forçarmos PC no operando 1 no próximo estágio)
+            reg_id_ex.eh_auipc = true;
+
+            // A operação será: PC + Imediato
+            reg_id_ex.operacao_ula = ULA_SOMA;
+
+            // Importante: Definimos o opcode para controle do 'usa_imediato' no EX
+            reg_id_ex.opcode = 0x17;
             break;
 
         case 0x6F: // --- JAL ---

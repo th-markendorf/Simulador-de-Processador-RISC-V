@@ -32,6 +32,7 @@ struct ID_EX_Register {
     bool eh_branch = false; // É uma instrução BEQ, BNE, etc.
     bool eh_jal = false;    // É uma instrução JAL
     bool eh_jalr = false;
+    bool eh_auipc = false;
     uint32_t funct3_branch; // Salva o tipo de branch (BEQ=0, BNE=1, etc.)
 };
 
