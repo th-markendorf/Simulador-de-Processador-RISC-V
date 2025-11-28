@@ -309,7 +309,21 @@ void Core::pipeline_estagio_EX() {
     if (reg_id_ex.eh_jal) {
         m_do_flush = true;
         m_new_pc_target = reg_id_ex.pc + reg_id_ex.imediato;
+        reg_ex_mem.resultado_ula = reg_id_ex.pc + 4;
     }
+
+    else if (reg_id_ex.eh_jalr) {
+        m_do_flush = true; // Precisamos limpar o pipeline pois vamos pular
+
+        // Cálculo do Alvo: (rs1 + imediato) & ~1
+        // rs1_atual já contém o valor correto (com forwarding se necessário)
+        m_new_pc_target = (rs1_atual + reg_id_ex.imediato) & ~1;
+
+        // Cálculo do Link: O padrão RISC-V diz que rd = PC + 4
+        // Sobrescrevemos o resultado da ULA para garantir que o valor salvo seja PC+4
+        reg_ex_mem.resultado_ula = reg_id_ex.pc + 4;
+    }
+
     // Se a instrução for um Branch (precisa decidir)
     else if (reg_id_ex.eh_branch) {
         bool tomar_desvio = false;
@@ -509,6 +523,16 @@ void Core::pipeline_estagio_ID() {
             reg_id_ex.valor_rs1 = reg_if_id.pc;
             reg_id_ex.valor_rs2 = 4;
             reg_id_ex.eh_jal = true;
+            break;
+
+        case 0x67: // --- JALR ---
+            reg_id_ex.usar_ula = true;
+            reg_id_ex.escrever_registrador = true;
+            reg_id_ex.imediato = inst.imediato_tipo_I();
+            reg_id_ex.rs1_index = inst.rs1();
+            reg_id_ex.rd_destino = inst.rd();
+            reg_id_ex.eh_jalr = true;
+            reg_id_ex.operacao_ula = ULA_SOMA;
             break;
 
         case 0x63: // --- BRANCH ---
