@@ -12,16 +12,29 @@ LauncherWindow::LauncherWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-    // Ajusta o título da janela
-    this->setWindowTitle("Simulador RISC-V - Menu Principal");
+    // AJUSTE DA JANELA
+    this->setWindowTitle("Simulador RISC-V");
+    this->setFixedSize(400, 500);
 
-    // --- CRIAÇÃO DO BOTÃO "SOBRE" VIA CÓDIGO ---
+    // Configurações de Layout
+    int btnWidth = 220;
+    int btnHeight = 50;
+    int centerX = (this->width() - btnWidth) / 2;
+    int startY = 140;
+    int gap = 70;
+
+    // REAJUSTE DOS BOTÕES EXISTENTES
+    ui->simuladorButton->setGeometry(centerX, startY, btnWidth, btnHeight);
+    ui->simuladorButton->setText("Simulador");
+
+    ui->demoButton->setGeometry(centerX, startY + gap, btnWidth, btnHeight);
+    ui->demoButton->setText("Modo Demo");
+
+    //BOTÃO "SOBRE"
     QPushButton *btnSobre = new QPushButton("Sobre", this);
+    btnSobre->setGeometry(centerX, startY + (gap * 2), btnWidth, btnHeight);
 
-    // Posiciona abaixo do botão Demo
-    btnSobre->setGeometry(300, 260, 94, 26);
-
-    // Conecta o clique à mensagem explicativa (TEXTO MELHORADO)
+    // Conecta o clique à mensagem explicativa
     connect(btnSobre, &QPushButton::clicked, this, [this]() {
          QString texto =
              "<h3>Bem-vindo ao Simulador RISC-V</h3>"
@@ -45,7 +58,6 @@ LauncherWindow::LauncherWindow(QWidget *parent) :
 
          QMessageBox::about(this, "Sobre o Projeto", texto);
     });
-    // -------------------------------------------
 }
 
 LauncherWindow::~LauncherWindow() 

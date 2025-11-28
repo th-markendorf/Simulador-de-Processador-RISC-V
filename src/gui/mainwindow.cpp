@@ -26,7 +26,65 @@ MainWindow::MainWindow(Core *core, QWidget *parent)
 {
     ui->setupUi(this);
 
-    // --- CÓDIGO DO MENU DE AJUDA (ATUALIZADO E EXPANDIDO) ---
+    //CONFIGURAÇÃO GERAL DA JANELA
+    this->resize(850, 600);
+
+    ui->label->setParent(ui->centralwidget);
+    ui->logView->setParent(ui->centralwidget);
+    ui->label->show();
+    ui->logView->show();
+
+    int windowW = this->width();
+    int windowH = this->height();
+    int logsHeight = 140;
+    int tabWidgetHeight = windowH - logsHeight - 20;
+
+    ui->mainTabWidget->setGeometry(10, 10, windowW - 20, tabWidgetHeight);
+    ui->label->setGeometry(20, tabWidgetHeight + 15, 200, 20);
+    ui->logView->setGeometry(20, tabWidgetHeight + 40, windowW - 40, logsHeight - 50);
+    ui->loadButton->setParent(ui->tab);
+    ui->resetButton->setParent(ui->tab);
+    ui->runButton->setParent(ui->tab);
+    ui->stepButton->setParent(ui->tab);
+    ui->label_2->setParent(ui->tab);
+    ui->registersTable->setParent(ui->tab);
+
+    ui->loadButton->show(); ui->resetButton->show();
+    ui->runButton->show();  ui->stepButton->show();
+    ui->label_2->show();    ui->registersTable->show();
+
+    // Definições de Geometria Interna
+    int contentX = 190;
+    int contentW = 435;
+    int topMargin = 20;
+
+    // Botões
+    int btnH = 30;
+    int btnGap = 8;
+
+    ui->loadButton->setGeometry(contentX, topMargin, contentW, btnH);
+    ui->runButton->setGeometry(contentX, topMargin + (btnH + btnGap), contentW, btnH);
+    ui->stepButton->setGeometry(contentX, topMargin + (btnH + btnGap) * 2, contentW, btnH);
+    ui->resetButton->setGeometry(contentX, topMargin + (btnH + btnGap) * 3, contentW, btnH);
+
+    // Estilo dos botões
+    QString estiloBtn = "font-size: 9pt; padding: 4px;";
+    ui->loadButton->setStyleSheet(estiloBtn);
+    ui->resetButton->setStyleSheet(estiloBtn);
+    ui->runButton->setStyleSheet(estiloBtn);
+    ui->stepButton->setStyleSheet(estiloBtn);
+
+    // Tabela
+    int buttonsEndY = topMargin + (btnH + btnGap) * 4;
+    ui->label_2->setGeometry(contentX, buttonsEndY + 15, 200, 20); // Label "Registradores"
+
+    int tableStartY = buttonsEndY + 40;
+    int tableHeight = tabWidgetHeight - tableStartY - 50;
+
+    ui->registersTable->setGeometry(contentX, tableStartY, contentW, tableHeight);
+
+
+    // MENU DE AJUDA
     QMenu *menuAjuda = ui->menubar->addMenu("Ajuda");
     QAction *actionSobre = new QAction("Instruções / Sobre", this);
 
@@ -54,11 +112,9 @@ MainWindow::MainWindow(Core *core, QWidget *parent)
     });
 
     menuAjuda->addAction(actionSobre);
-    // ---------------------------------------------------------
 
     ui->cacheTable->setColumnCount(4);
     ui->cacheTable->setHorizontalHeaderLabels(QStringList() << "Indice" << "Validade" << "Tag" << "Dados (Hex)");
-
     ui->cacheTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->cacheTable->verticalHeader()->setVisible(false);
     ui->cacheTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -108,7 +164,6 @@ MainWindow::MainWindow(Core *core, QWidget *parent)
     ui->runButton->setEnabled(false);
     ui->stepButton->setEnabled(false);
 }
-
 MainWindow::~MainWindow() {
     delete ui;
 }

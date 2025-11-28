@@ -23,8 +23,34 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
                                                       m_core(core),
                                                       m_highlightBrush(QColor(80, 80, 80)) {
     ui->setupUi(this);
+    ui->label_9->setGeometry(250, 30, 130, 20);
+    ui->spinRegValor->setGeometry(250, 55, 120, 28); // Altura levemente reduzida
 
-    // --- CÓDIGO DO MENU DE AJUDA (DEMO) ---
+    int btnWidth = 160;  // Largura menor (antes era 190)
+    int btnHeight = 28;  // Altura menor (antes era 35)
+
+    int col1_X = 410;
+    int col2_X = 580;
+
+    int row1_Y = 30;
+    int row2_Y = 65;
+
+    // Aplica as posições
+    ui->setRegButtonRs1->setGeometry(col1_X, row1_Y, btnWidth, btnHeight);
+    ui->setRegButtonRs2->setGeometry(col1_X, row2_Y, btnWidth, btnHeight);
+    ui->resetRegsButton->setGeometry(col2_X, row1_Y, btnWidth, btnHeight);
+    ui->execButton->setGeometry(col2_X, row2_Y, btnWidth, btnHeight);
+
+    ui->resetRegsButton->setText("Resetar Tudo");
+
+    QString estiloCompacto = "font-size: 9pt; padding: 2px;";
+
+    ui->setRegButtonRs1->setStyleSheet(estiloCompacto);
+    ui->setRegButtonRs2->setStyleSheet(estiloCompacto);
+    ui->resetRegsButton->setStyleSheet(estiloCompacto);
+    ui->execButton->setStyleSheet(estiloCompacto);
+
+    // MENU DE AJUDA ---
     QMenu *menuAjuda = ui->menubar->addMenu("Ajuda");
     QAction *actionInstrucoes = new QAction("Explicação das Instruções", this);
 
@@ -56,7 +82,6 @@ DemoWindow::DemoWindow(Core *core, QWidget *parent) : QMainWindow(parent),
     });
 
     menuAjuda->addAction(actionInstrucoes);
-    // --------------------------------------
 
     ui->logView->setReadOnly(true);
 
